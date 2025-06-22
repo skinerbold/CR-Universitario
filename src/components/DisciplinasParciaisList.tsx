@@ -1,0 +1,361 @@
+import React, { useState } from 'react';
+import { DisciplinaParcial, Atividade } from '@/types';
+import { Trash2, Plus, BookOpen, Edit, X, Check } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import ControleFaltas from './ControleFaltas';
+import { estaReprovadoPorFaltas } from '@/utils/faltasUtils';
+
+interface DisciplinasParciaisListProps {
+  disciplinas: DisciplinaParcial[];
+  onRemoveDisciplina: (id: string) => void;
+  onAddAtividade: (disciplinaId: string, atividade: Omit<Atividade, 'id'>) => void;
+  onEditAtividade: (disciplinaId: string, atividadeId: string, dadosAtualizados: Omit<Atividade, 'id'>) => void;
+  onRemoveAtividade: (disciplinaId: string, atividadeId: string) => void;
+  onAdicionarFalta: (disciplinaId: string) => void;
+  onAdicionarAulaDupla: (disciplinaId: string) => void;
+  onRemoverFalta: (disciplinaId: string) => void;
+  onDefinirFaltas: (disciplinaId: string, quantidade: number) => void;
+}
+
+const DisciplinasParciaisList = ({ 
+  disciplinas, 
+  onRemoveDisciplina, 
+  onAddAtividade,
+  onEditAtividade,
+  onRemoveAtividade,
+  onAdicionarFalta,
+  onAdicionarAulaDupla,
+  onRemoverFalta,
+  onDefinirFaltas
+}: DisciplinasParciaisListProps) => {const [expandedDisciplina, setExpandedDisciplina] = useState<string | null>(null);
+  const [notaObtida, setNotaObtida] = useState('');
+  const [notaTotal, setNotaTotal] = useState('');
+  const [editandoAtividade, setEditandoAtividade] = useState<{disciplinaId: string, atividadeId: string} | null>(null);
+  const [notaObtidaEdicao, setNotaObtidaEdicao] = useState('');
+  const [notaTotalEdicao, setNotaTotalEdicao] = useState('');
+  const handleAddAtividade = (disciplinaId: string) => {
+    if (!notaObtida || !notaTotal) {
+      alert('Por favor, preencha nota obtida e nota total');
+      return;
+    }
+
+    const notaObtidaNum = parseFloat(notaObtida);
+    const notaTotalNum = parseFloat(notaTotal);
+
+    if (notaObtidaNum < 0 || notaTotalNum <= 0) {
+      alert('As notas devem ser válidas (obtida ≥ 0, total > 0)');
+      return;
+    }
+
+    if (notaObtidaNum > notaTotalNum) {
+      alert('A nota obtida não pode ser maior que a nota total da atividade');
+      return;
+    }    // Verificar se a nota total da atividade não fará ultrapassar 100 pontos consumidos na disciplina
+    const disciplina = disciplinas.find(d => d.id === disciplinaId);
+    if (disciplina) {
+      const pontosJaConsumidos = disciplina.pontosConsumidos || 0;
+      const novoTotalConsumido = pontosJaConsumidos + notaTotalNum;
+      
+      if (novoTotalConsumido > 100) {
+        alert(`Esta atividade faria ultrapassar 100 pontos na disciplina. Já foram consumidos ${pontosJaConsumidos.toFixed(1)} pontos e podem ser adicionados no máximo ${(100 - pontosJaConsumidos).toFixed(1)} pontos em atividades.`);
+        return;
+      }
+    }
+
+    onAddAtividade(disciplinaId, {
+      notaObtida: notaObtidaNum,
+      notaTotal: notaTotalNum
+    });    setNotaObtida('');
+    setNotaTotal('');
+  };
+
+  const iniciarEdicaoAtividade = (disciplinaId: string, atividadeId: string, atividade: Atividade) => {
+    setEditandoAtividade({ disciplinaId, atividadeId });
+    setNotaObtidaEdicao(atividade.notaObtida.toString());
+    setNotaTotalEdicao(atividade.notaTotal.toString());
+  };
+
+  const cancelarEdicao = () => {
+    setEditandoAtividade(null);
+    setNotaObtidaEdicao('');
+    setNotaTotalEdicao('');
+  };
+
+  const salvarEdicaoAtividade = () => {
+    if (!editandoAtividade || !notaObtidaEdicao || !notaTotalEdicao) {
+      alert('Por favor, preencha todos os campos');
+      return;
+    }
+
+    const notaObtidaNum = parseFloat(notaObtidaEdicao);
+    const notaTotalNum = parseFloat(notaTotalEdicao);
+
+    if (notaObtidaNum < 0 || notaTotalNum <= 0) {
+      alert('As notas devem ser válidas (obtida ≥ 0, total > 0)');
+      return;
+    }
+
+    if (notaObtidaNum > notaTotalNum) {
+      alert('A nota obtida não pode ser maior que a nota total da atividade');
+      return;
+    }
+
+    // Verificar se a nota total não fará ultrapassar 100 pontos (considerando a atividade atual sendo editada)
+    const disciplina = disciplinas.find(d => d.id === editandoAtividade.disciplinaId);
+    if (disciplina) {
+      const atividadeAtual = disciplina.atividades.find(a => a.id === editandoAtividade.atividadeId);
+      const pontosJaConsumidos = disciplina.pontosConsumidos || 0;
+      const pontosAtividadeAtual = atividadeAtual?.notaTotal || 0;
+      const novoTotalConsumido = pontosJaConsumidos - pontosAtividadeAtual + notaTotalNum;
+      
+      if (novoTotalConsumido > 100) {
+        alert(`Esta alteração faria ultrapassar 100 pontos na disciplina. Total atual: ${pontosJaConsumidos.toFixed(1)} pontos. Máximo permitido para esta atividade: ${(100 - pontosJaConsumidos + pontosAtividadeAtual).toFixed(1)} pontos.`);
+        return;
+      }
+    }
+
+    onEditAtividade(editandoAtividade.disciplinaId, editandoAtividade.atividadeId, {
+      notaObtida: notaObtidaNum,
+      notaTotal: notaTotalNum
+    });
+
+    cancelarEdicao();
+  };
+
+  const removerAtividade = (disciplinaId: string, atividadeId: string) => {
+    if (confirm('Tem certeza que deseja remover esta atividade?')) {
+      onRemoveAtividade(disciplinaId, atividadeId);
+    }
+  };
+
+  if (disciplinas.length === 0) {
+    return (
+      <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+        <p className="text-center text-gray-500">
+          Nenhuma disciplina adicionada ainda. Comece adicionando uma disciplina acima.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+      <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+        <BookOpen className="w-5 h-5" />
+        Disciplinas Parciais ({disciplinas.length})
+      </h2>
+      
+      <div className="space-y-4">
+        {disciplinas.map((disciplina) => (
+          <div
+            key={disciplina.id}
+            className="border border-gray-200 rounded-lg p-4 bg-gray-50"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex-1">
+                <h3 className="font-medium text-gray-800">{disciplina.nome}</h3>
+                <div className="flex gap-4 text-sm text-gray-600 mt-1">
+                  <span>Créditos: <strong>{disciplina.creditos}</strong></span>                  <span>Atividades: <strong>{disciplina.atividades.length}</strong></span>
+                  {disciplina.atividades.length > 0 && (
+                    <>
+                      {(() => {
+                        const faltasAtuais = disciplina.faltas || 0;
+                        const reprovadoPorFaltas = estaReprovadoPorFaltas(disciplina.creditos, faltasAtuais);
+                        const notaExibida = reprovadoPorFaltas ? 0 : disciplina.notaParcial;
+                        
+                        return (
+                          <span>
+                            Pontos Obtidos: <strong className={`${
+                              reprovadoPorFaltas ? 'text-red-600' :
+                              notaExibida >= 70 ? 'text-green-600' : 
+                              notaExibida >= 60 ? 'text-yellow-600' : 'text-red-600'
+                            }`}>
+                              {notaExibida.toFixed(1)}
+                              {reprovadoPorFaltas && <span className="text-xs ml-1">(Nota zerada por faltas)</span>}
+                            </strong>
+                          </span>
+                        );
+                      })()}
+                      <span className="text-xs text-gray-500">
+                        (Restam {(100 - (disciplina.pontosConsumidos || 0)).toFixed(1)} pts disponíveis)
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+              
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => setExpandedDisciplina(
+                    expandedDisciplina === disciplina.id ? null : disciplina.id
+                  )}
+                  variant="outline"
+                  size="sm"
+                  className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  Adicionar Atividade
+                </Button>
+                <Button
+                  onClick={() => onRemoveDisciplina(disciplina.id)}
+                  variant="outline"
+                  size="sm"
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Lista de atividades */}
+            {disciplina.atividades.length > 0 && (
+              <div className="mb-3">
+                <h4 className="text-sm font-medium text-gray-700 mb-2">Atividades:</h4>                <div className="space-y-1">
+                  {disciplina.atividades.map((atividade, index) => (
+                    <div key={atividade.id} className="text-sm text-gray-600 bg-white p-3 rounded border">
+                      {editandoAtividade?.disciplinaId === disciplina.id && editandoAtividade?.atividadeId === atividade.id ? (
+                        // Modo edição
+                        <div className="space-y-3">
+                          <div className="text-xs text-blue-600 font-medium mb-2">Editando Atividade {index + 1}</div>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <div>
+                              <Label className="text-xs text-gray-700">Pontos Obtidos</Label>
+                              <Input
+                                type="number"
+                                min="0"
+                                step="0.1"
+                                value={notaObtidaEdicao}
+                                onChange={(e) => setNotaObtidaEdicao(e.target.value)}
+                                className="mt-1 text-sm"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-xs text-gray-700">Pontos Totais</Label>
+                              <Input
+                                type="number"
+                                min="0.1"
+                                step="0.1"
+                                value={notaTotalEdicao}
+                                onChange={(e) => setNotaTotalEdicao(e.target.value)}
+                                className="mt-1 text-sm"
+                              />
+                            </div>
+                            <div className="flex items-end gap-1">
+                              <Button
+                                onClick={salvarEdicaoAtividade}
+                                size="sm"
+                                className="bg-green-600 hover:bg-green-700 text-white flex-1"
+                              >
+                                <Check className="w-3 h-3 mr-1" />
+                                Salvar
+                              </Button>
+                              <Button
+                                onClick={cancelarEdicao}
+                                variant="outline"
+                                size="sm"
+                                className="text-gray-600"
+                              >
+                                <X className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        // Modo visualização
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <span>Atividade {index + 1}: <strong>{atividade.notaObtida}</strong> pontos obtidos</span>
+                            <span className="text-gray-500 ml-2">
+                              (de {atividade.notaTotal} pontos da atividade - {((atividade.notaObtida / atividade.notaTotal) * 100).toFixed(1)}%)
+                            </span>
+                          </div>
+                          <div className="flex gap-1 ml-3">
+                            <Button
+                              onClick={() => iniciarEdicaoAtividade(disciplina.id, atividade.id, atividade)}
+                              variant="outline"
+                              size="sm"
+                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 p-1"
+                            >
+                              <Edit className="w-3 h-3" />
+                            </Button>
+                            <Button
+                              onClick={() => removerAtividade(disciplina.id, atividade.id)}
+                              variant="outline"
+                              size="sm"
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50 p-1"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>            )}            {/* Controle de Faltas */}
+            <ControleFaltas
+              disciplina={disciplina}
+              onAdicionarFalta={onAdicionarFalta}
+              onAdicionarAulaDupla={onAdicionarAulaDupla}
+              onRemoverFalta={onRemoverFalta}
+              onDefinirFaltas={onDefinirFaltas}
+            />
+
+            {/* Formulário para adicionar atividade */}
+            {expandedDisciplina === disciplina.id && (
+              <div className="bg-white p-4 rounded border-2 border-blue-200">
+                <h4 className="text-sm font-medium text-gray-700 mb-3">Nova Atividade</h4>                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="nota-obtida" className="text-sm font-medium text-gray-700">
+                      Pontos Obtidos
+                    </Label>
+                    <Input
+                      id="nota-obtida"
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      value={notaObtida}
+                      onChange={(e) => setNotaObtida(e.target.value)}
+                      placeholder="20"
+                      className="mt-1"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="nota-total" className="text-sm font-medium text-gray-700">
+                      Pontos Totais da Atividade
+                    </Label>
+                    <Input
+                      id="nota-total"
+                      type="number"
+                      min="0.1"
+                      step="0.1"
+                      value={notaTotal}
+                      onChange={(e) => setNotaTotal(e.target.value)}
+                      placeholder="25"
+                      className="mt-1"
+                    />
+                  </div>
+                  
+                  <div className="flex items-end">
+                    <Button
+                      onClick={() => handleAddAtividade(disciplina.id)}
+                      className="w-full bg-green-600 hover:bg-green-700 text-white"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Adicionar
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default DisciplinasParciaisList;
