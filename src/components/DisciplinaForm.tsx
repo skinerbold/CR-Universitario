@@ -49,13 +49,13 @@ const DisciplinaForm = ({ onAddDisciplina }: DisciplinaFormProps) => {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-      <h2 className="text-xl font-semibold text-gray-800 mb-4">
+    <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-6">
+      <h2 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4">
         Adicionar Disciplina
       </h2>
       
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div>
             <Label htmlFor="nome" className="text-sm font-medium text-gray-700">
               Nome da Disciplina
@@ -105,7 +105,7 @@ const DisciplinaForm = ({ onAddDisciplina }: DisciplinaFormProps) => {
         
         <Button 
           type="submit" 
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm sm:text-base"
         >
           <Plus className="w-4 h-4 mr-2" />
           Adicionar Disciplina

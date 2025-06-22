@@ -204,24 +204,20 @@ const ControleFaltas = ({
             >
               <Calendar className="w-4 h-4 mr-2" />
               {risco.status === 'reprovado' ? 'Reprovado por Faltas' : 'Faltei Hoje'}
-            </Button>
-
-            {/* Controles de ajuste fino */}
+            </Button>            {/* Controles de ajuste fino */}
             <div className="flex gap-2">
               <Button
                 onClick={() => onRemoverFalta(disciplina.id)}
                 disabled={faltasAtuais === 0}
-                variant="outline"
                 size="sm"
-                className="flex-1 text-green-600 border-green-300 hover:bg-green-50"
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white disabled:bg-gray-300 disabled:text-gray-500"
               >
                 <Minus className="w-3 h-3 mr-1" />
                 Remover
               </Button>              <Button
                 onClick={() => onAdicionarAulaDupla(disciplina.id)}
-                variant="outline"
                 size="sm"
-                className="flex-1 text-red-600 border-red-300 hover:bg-red-50"
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white"
               >
                 <Plus className="w-3 h-3 mr-1" />
                 Adicionar para aula dupla

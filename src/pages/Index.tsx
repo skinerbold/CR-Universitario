@@ -11,6 +11,7 @@ import CRDesejado from '@/components/CRDesejado';
 import Calculadora from '@/components/Calculadora';
 import GerenciadorPersistencia from '@/components/GerenciadorPersistencia';
 import OfflineIndicator from '@/components/OfflineIndicator';
+import ResponsiveTest from '@/components/ResponsiveTest';
 import { useCalculadora } from '@/hooks/useCalculadora';
 import { Button } from '@/components/ui/button';
 import { RotateCcw } from 'lucide-react';
@@ -41,7 +42,7 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       <Header />
       
-      <main className="container mx-auto max-w-4xl px-6 py-8">
+      <main className="container mx-auto max-w-4xl px-4 sm:px-6 py-6 sm:py-8">
         <TipoCalculoSelector 
           tipoAtual={tipoCalculo}
           onTipoChange={setTipoCalculo}
@@ -121,12 +122,15 @@ const Index = () => {
       {/* Indicador de status offline */}
       <OfflineIndicator />
       
+      {/* Debug responsivo - remover em produção */}
+      <ResponsiveTest />
+      
       <footer className="bg-gray-800 text-white py-6 mt-12">
-        <div className="container mx-auto max-w-4xl px-6 text-center">
-          <p className="text-gray-400">
+        <div className="container mx-auto max-w-4xl px-4 sm:px-6 text-center">
+          <p className="text-gray-400 text-sm sm:text-base">
             Calculadora de Rendimento Universitário - Desenvolvida para facilitar seus estudos
           </p>
-          <p className="text-gray-400">
+          <p className="text-gray-400 text-xs sm:text-sm mt-1">
             Criada por Skiner Bold - o amor da Aninha
           </p>
         </div>

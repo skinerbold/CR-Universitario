@@ -273,7 +273,7 @@ const CRDesejado = ({ disciplinas, disciplinasParciais, tipoCalculo, crAtual }: 
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <Label htmlFor="cr-desejado" className="text-sm font-medium text-gray-700">
               CR Desejado (0-100)
@@ -340,7 +340,7 @@ const CRDesejado = ({ disciplinas, disciplinasParciais, tipoCalculo, crAtual }: 
                   <Calculator className="w-5 h-5" />
                   Análise para atingir CR {calculos.crDesejado.toFixed(2)}
                 </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                   <div className="space-y-2 text-sm">
                     <p><strong>Pontos já obtidos:</strong> {calculos.pontosJaObtidos.toFixed(2)}</p>
                     {calculos.tipoCalculo === 'parcial' ? (
@@ -418,7 +418,7 @@ const CRDesejado = ({ disciplinas, disciplinasParciais, tipoCalculo, crAtual }: 
                     <h4 className="font-medium text-gray-800 mb-2">
                       Disciplinas {calculos.tipoCalculo === 'parcial' ? 'incompletas' : 'que precisam de nota'} ({calculos.disciplinasIncompletas.length}):
                     </h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {calculos.disciplinasIncompletas.map((disciplina, index) => (
                         <div key={index} className="text-sm bg-white p-2 rounded border">
                           <span className="font-medium">{disciplina.nome}</span>

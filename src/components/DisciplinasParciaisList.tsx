@@ -152,11 +152,10 @@ const DisciplinasParciaisList = ({
           <div
             key={disciplina.id}
             className="border border-gray-200 rounded-lg p-4 bg-gray-50"
-          >
-            <div className="flex items-center justify-between mb-3">
+          >            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 gap-3">
               <div className="flex-1">
                 <h3 className="font-medium text-gray-800">{disciplina.nome}</h3>
-                <div className="flex gap-4 text-sm text-gray-600 mt-1">
+                <div className="flex flex-wrap gap-2 sm:gap-4 text-sm text-gray-600 mt-1">
                   <span>Créditos: <strong>{disciplina.creditos}</strong></span>                  <span>Atividades: <strong>{disciplina.atividades.length}</strong></span>
                   {disciplina.atividades.length > 0 && (
                     <>
@@ -166,7 +165,7 @@ const DisciplinasParciaisList = ({
                         const notaExibida = reprovadoPorFaltas ? 0 : disciplina.notaParcial;
                         
                         return (
-                          <span>
+                          <span className="break-all">
                             Pontos Obtidos: <strong className={`${
                               reprovadoPorFaltas ? 'text-red-600' :
                               notaExibida >= 70 ? 'text-green-600' : 
@@ -178,7 +177,7 @@ const DisciplinasParciaisList = ({
                           </span>
                         );
                       })()}
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-gray-500 break-all">
                         (Restam {(100 - (disciplina.pontosConsumidos || 0)).toFixed(1)} pts disponíveis)
                       </span>
                     </>
@@ -186,7 +185,7 @@ const DisciplinasParciaisList = ({
                 </div>
               </div>
               
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2 min-w-fit">
                 <Button
                   onClick={() => setExpandedDisciplina(
                     expandedDisciplina === disciplina.id ? null : disciplina.id
@@ -206,8 +205,67 @@ const DisciplinasParciaisList = ({
                 >
                   <Trash2 className="w-4 h-4" />
                 </Button>
+              </div>            </div>
+
+            {/* Formulário para adicionar atividade - Aparece logo abaixo do botão */}
+            {expandedDisciplina === disciplina.id && (
+              <div className="bg-blue-50 p-4 rounded-lg border-2 border-blue-200 mb-4">
+                <h4 className="text-sm font-medium text-blue-800 mb-3 flex items-center gap-2">
+                  <Plus className="w-4 h-4" />
+                  Nova Atividade para {disciplina.nome}
+                </h4>                
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="nota-obtida" className="text-sm font-medium text-gray-700">
+                      Pontos Obtidos
+                    </Label>
+                    <Input
+                      id="nota-obtida"
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      value={notaObtida}
+                      onChange={(e) => setNotaObtida(e.target.value)}
+                      placeholder="20"
+                      className="mt-1"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="nota-total" className="text-sm font-medium text-gray-700">
+                      Pontos Totais da Atividade
+                    </Label>
+                    <Input
+                      id="nota-total"
+                      type="number"
+                      min="0.1"
+                      step="0.1"
+                      value={notaTotal}
+                      onChange={(e) => setNotaTotal(e.target.value)}
+                      placeholder="25"
+                      className="mt-1"
+                    />
+                  </div>
+                  
+                  <div className="flex items-end gap-2">
+                    <Button
+                      onClick={() => handleAddAtividade(disciplina.id)}
+                      className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Adicionar
+                    </Button>
+                    <Button
+                      onClick={() => setExpandedDisciplina(null)}
+                      variant="outline"
+                      className="text-gray-600"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Lista de atividades */}
             {disciplina.atividades.length > 0 && (
@@ -293,64 +351,15 @@ const DisciplinasParciaisList = ({
                       )}
                     </div>
                   ))}
-                </div>
-              </div>            )}            {/* Controle de Faltas */}
+                </div>              </div>            )}
+
+            {/* Controle de Faltas */}
             <ControleFaltas
               disciplina={disciplina}
               onAdicionarFalta={onAdicionarFalta}
               onAdicionarAulaDupla={onAdicionarAulaDupla}
               onRemoverFalta={onRemoverFalta}
-              onDefinirFaltas={onDefinirFaltas}
-            />
-
-            {/* Formulário para adicionar atividade */}
-            {expandedDisciplina === disciplina.id && (
-              <div className="bg-white p-4 rounded border-2 border-blue-200">
-                <h4 className="text-sm font-medium text-gray-700 mb-3">Nova Atividade</h4>                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <Label htmlFor="nota-obtida" className="text-sm font-medium text-gray-700">
-                      Pontos Obtidos
-                    </Label>
-                    <Input
-                      id="nota-obtida"
-                      type="number"
-                      min="0"
-                      step="0.1"
-                      value={notaObtida}
-                      onChange={(e) => setNotaObtida(e.target.value)}
-                      placeholder="20"
-                      className="mt-1"
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="nota-total" className="text-sm font-medium text-gray-700">
-                      Pontos Totais da Atividade
-                    </Label>
-                    <Input
-                      id="nota-total"
-                      type="number"
-                      min="0.1"
-                      step="0.1"
-                      value={notaTotal}
-                      onChange={(e) => setNotaTotal(e.target.value)}
-                      placeholder="25"
-                      className="mt-1"
-                    />
-                  </div>
-                  
-                  <div className="flex items-end">
-                    <Button
-                      onClick={() => handleAddAtividade(disciplina.id)}
-                      className="w-full bg-green-600 hover:bg-green-700 text-white"
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Adicionar
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            )}
+              onDefinirFaltas={onDefinirFaltas}            />
           </div>
         ))}
       </div>
