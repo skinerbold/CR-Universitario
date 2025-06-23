@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reset Service Worker - CR Calc</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: #f8f9fa;
+        }
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            margin: 0.5rem 0.5rem 0.5rem 0;
+            font-size: 1rem;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        .danger {
+            background: #dc2626;
+        }
+        .danger:hover {
+            background: #b91c1c;
+        }
+        .success {
+            background: #16a34a;
+        }
+        .success:hover {
+            background: #15803d;
+        }
+        pre {
+            background: #f3f4f6;
+            padding: 1rem;
+            border-radius: 0.375rem;
+            overflow-x: auto;
+            font-size: 0.875rem;
+        }
+        .log {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #d1d5db;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛠️ Reset Service Worker - CR Calc</h1>
+        
+        <p>Use esta página para resolver problemas com o Service Worker:</p>
+        
+        <h3>🧹 Limpeza Completa</h3>
+        <button onclick="clearAllCache()" class="danger">
+            Limpar Todo Cache e Service Worker
+        </button>
+        
+        <h3>🔧 Desenvolvimento</h3>
+        <button onclick="enableServiceWorker()">
+            Habilitar Service Worker em Dev
+        </button>
+        <button onclick="disableServiceWorker()">
+            Desabilitar Service Worker em Dev
+        </button>
+        
+        <h3>🔄 Controle</h3>
+        <button onclick="reloadWithoutCache()" class="success">
+            Recarregar sem Cache
+        </button>
+        <button onclick="goToApp()">
+            Ir para App
+        </button>
+        
+        <div id="log" class="log">
+            <p>📝 Log de ações aparecerá aqui...</p>
+        </div>
+    </div>
+
+    <script>
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const now = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `<p>[${now}] ${message}</p>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        async function clearAllCache() {
+            log('🧹 Iniciando limpeza completa...');
+            
+            try {
+                // 1. Desregistrar Service Workers
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    for (let registration of registrations) {
+                        log(`🗑️ Desregistrando Service Worker: ${registration.scope}`);
+                        await registration.unregister();
+                    }
+                }
+                
+                // 2. Limpar caches
+                if ('caches' in window) {
+                    const cacheNames = await caches.keys();
+                    for (let cacheName of cacheNames) {
+                        log(`🗑️ Removendo cache: ${cacheName}`);
+                        await caches.delete(cacheName);
+                    }
+                }
+                
+                // 3. Limpar storage
+                localStorage.clear();
+                sessionStorage.clear();
+                log('🗑️ LocalStorage e SessionStorage limpos');
+                
+                log('✅ Limpeza completa finalizada!');
+                log('🔄 Recarregue a página principal para aplicar mudanças');
+                
+            } catch (error) {
+                log(`❌ Erro na limpeza: ${error.message}`);
+            }
+        }
+
+        function enableServiceWorker() {
+            localStorage.setItem('enableServiceWorker', 'true');
+            log('✅ Service Worker habilitado para desenvolvimento');
+            log('🔄 Recarregue a página principal para aplicar');
+        }
+
+        function disableServiceWorker() {
+            localStorage.setItem('enableServiceWorker', 'false');
+            log('❌ Service Worker desabilitado para desenvolvimento');
+            log('🔄 Recarregue a página principal para aplicar');
+        }
+
+        function reloadWithoutCache() {
+            log('🔄 Recarregando sem cache...');
+            window.location.reload(true);
+        }
+
+        function goToApp() {
+            log('🚀 Redirecionando para aplicativo...');
+            window.location.href = '/';
+        }
+
+        // Status inicial
+        window.addEventListener('load', () => {
+            log('🔧 Página de reset carregada');
+            
+            const swEnabled = localStorage.getItem('enableServiceWorker');
+            log(`📊 Service Worker em dev: ${swEnabled === 'true' ? 'Habilitado' : 'Desabilitado'}`);
+            
+            navigator.serviceWorker.getRegistrations().then(regs => {
+                log(`📊 Service Workers registrados: ${regs.length}`);
+                regs.forEach(reg => {
+                    log(`   - ${reg.scope}`);
+                });
+            });
+            
+            caches.keys().then(cacheNames => {
+                log(`📊 Caches ativos: ${cacheNames.length}`);
+                cacheNames.forEach(name => {
+                    log(`   - ${name}`);
+                });
+            });
+        });
+    </script>
+</body>
+</html>

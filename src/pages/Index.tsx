@@ -11,7 +11,6 @@ import CRDesejado from '@/components/CRDesejado';
 import Calculadora from '@/components/Calculadora';
 import GerenciadorPersistencia from '@/components/GerenciadorPersistencia';
 import OfflineIndicator from '@/components/OfflineIndicator';
-import ResponsiveTest from '@/components/ResponsiveTest';
 import { useCalculadora } from '@/hooks/useCalculadora';
 import { Button } from '@/components/ui/button';
 import { RotateCcw } from 'lucide-react';
@@ -121,9 +120,6 @@ const Index = () => {
       
       {/* Indicador de status offline */}
       <OfflineIndicator />
-      
-      {/* Debug responsivo - remover em produção */}
-      <ResponsiveTest />
       
       <footer className="bg-gray-800 text-white py-6 mt-12">
         <div className="container mx-auto max-w-4xl px-4 sm:px-6 text-center">

@@ -74,8 +74,8 @@ const ResultadoCalculos = ({ resultado, tipoCalculo }: ResultadoCalculosProps) =
         </div>
       </div>
       
-      <div className="mt-4 p-3 sm:p-4 bg-gray-50 rounded-lg">
-        <p className="text-xs sm:text-sm text-gray-600 text-center leading-relaxed">
+      <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+        <p className="text-sm text-gray-600 text-center">
           <strong>Fórmula:</strong> Média Ponderada = Σ(Nota × Créditos) ÷ Σ(Créditos)
           {tipoCalculo === 'parcial' && (
             <span className="block mt-1 text-xs">

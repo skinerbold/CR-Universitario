@@ -8,6 +8,7 @@ export interface Disciplina {
 
 export interface Atividade {
   id: string;
+  nome?: string;
   notaObtida: number;
   notaTotal: number;
 }

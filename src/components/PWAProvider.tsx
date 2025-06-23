@@ -7,10 +7,12 @@ interface PWAProps {
 export const PWAProvider = ({ children }: PWAProps) => {
   const [isInstallable, setIsInstallable] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-
   useEffect(() => {
-    // Registrar Service Worker
-    if ('serviceWorker' in navigator) {
+    // Só registra Service Worker em produção ou quando explicitamente habilitado
+    const isDev = import.meta.env.DEV;
+    const forceServiceWorker = localStorage.getItem('enableServiceWorker') === 'true';
+    
+    if ('serviceWorker' in navigator && (!isDev || forceServiceWorker)) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js')
           .then((registration) => {
@@ -20,6 +22,9 @@ export const PWAProvider = ({ children }: PWAProps) => {
             console.error('❌ Falha ao registrar Service Worker:', error);
           });
       });
+    } else if (isDev) {
+      console.log('🚧 Service Worker desabilitado em desenvolvimento');
+      console.log('💡 Para habilitar: localStorage.setItem("enableServiceWorker", "true")');
     }
 
     // Detectar se app é instalável

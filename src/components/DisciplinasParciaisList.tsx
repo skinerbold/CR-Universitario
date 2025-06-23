@@ -30,9 +30,11 @@ const DisciplinasParciaisList = ({
   onRemoverFalta,
   onDefinirFaltas
 }: DisciplinasParciaisListProps) => {const [expandedDisciplina, setExpandedDisciplina] = useState<string | null>(null);
+  const [nomeAtividade, setNomeAtividade] = useState('');
   const [notaObtida, setNotaObtida] = useState('');
   const [notaTotal, setNotaTotal] = useState('');
   const [editandoAtividade, setEditandoAtividade] = useState<{disciplinaId: string, atividadeId: string} | null>(null);
+  const [nomeAtividadeEdicao, setNomeAtividadeEdicao] = useState('');
   const [notaObtidaEdicao, setNotaObtidaEdicao] = useState('');
   const [notaTotalEdicao, setNotaTotalEdicao] = useState('');
   const handleAddAtividade = (disciplinaId: string) => {
@@ -62,23 +64,24 @@ const DisciplinasParciaisList = ({
         alert(`Esta atividade faria ultrapassar 100 pontos na disciplina. Já foram consumidos ${pontosJaConsumidos.toFixed(1)} pontos e podem ser adicionados no máximo ${(100 - pontosJaConsumidos).toFixed(1)} pontos em atividades.`);
         return;
       }
-    }
-
-    onAddAtividade(disciplinaId, {
+    }    onAddAtividade(disciplinaId, {
+      nome: nomeAtividade.trim() || undefined,
       notaObtida: notaObtidaNum,
       notaTotal: notaTotalNum
-    });    setNotaObtida('');
+    });    setNomeAtividade('');
+    setNotaObtida('');
     setNotaTotal('');
   };
-
   const iniciarEdicaoAtividade = (disciplinaId: string, atividadeId: string, atividade: Atividade) => {
     setEditandoAtividade({ disciplinaId, atividadeId });
+    setNomeAtividadeEdicao(atividade.nome || '');
     setNotaObtidaEdicao(atividade.notaObtida.toString());
     setNotaTotalEdicao(atividade.notaTotal.toString());
   };
 
   const cancelarEdicao = () => {
     setEditandoAtividade(null);
+    setNomeAtividadeEdicao('');
     setNotaObtidaEdicao('');
     setNotaTotalEdicao('');
   };
@@ -114,9 +117,8 @@ const DisciplinasParciaisList = ({
         alert(`Esta alteração faria ultrapassar 100 pontos na disciplina. Total atual: ${pontosJaConsumidos.toFixed(1)} pontos. Máximo permitido para esta atividade: ${(100 - pontosJaConsumidos + pontosAtividadeAtual).toFixed(1)} pontos.`);
         return;
       }
-    }
-
-    onEditAtividade(editandoAtividade.disciplinaId, editandoAtividade.atividadeId, {
+    }    onEditAtividade(editandoAtividade.disciplinaId, editandoAtividade.atividadeId, {
+      nome: nomeAtividadeEdicao.trim() || undefined,
       notaObtida: notaObtidaNum,
       notaTotal: notaTotalNum
     });
@@ -213,8 +215,21 @@ const DisciplinasParciaisList = ({
                 <h4 className="text-sm font-medium text-blue-800 mb-3 flex items-center gap-2">
                   <Plus className="w-4 h-4" />
                   Nova Atividade para {disciplina.nome}
-                </h4>                
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                </h4>                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div>
+                    <Label htmlFor="nome-atividade" className="text-sm font-medium text-gray-700">
+                      Nome da Atividade (opcional)
+                    </Label>
+                    <Input
+                      id="nome-atividade"
+                      type="text"
+                      value={nomeAtividade}
+                      onChange={(e) => setNomeAtividade(e.target.value)}
+                      placeholder="Ex: Prova 1, Trabalho..."
+                      className="mt-1"
+                    />
+                  </div>
+                  
                   <div>
                     <Label htmlFor="nota-obtida" className="text-sm font-medium text-gray-700">
                       Pontos Obtidos
@@ -275,9 +290,18 @@ const DisciplinasParciaisList = ({
                     <div key={atividade.id} className="text-sm text-gray-600 bg-white p-3 rounded border">
                       {editandoAtividade?.disciplinaId === disciplina.id && editandoAtividade?.atividadeId === atividade.id ? (
                         // Modo edição
-                        <div className="space-y-3">
-                          <div className="text-xs text-blue-600 font-medium mb-2">Editando Atividade {index + 1}</div>
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div className="space-y-3">                          <div className="text-xs text-blue-600 font-medium mb-2">Editando {atividade.nome || `Atividade ${index + 1}`}</div>
+                          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                            <div>
+                              <Label className="text-xs text-gray-700">Nome da Atividade</Label>
+                              <Input
+                                type="text"
+                                value={nomeAtividadeEdicao}
+                                onChange={(e) => setNomeAtividadeEdicao(e.target.value)}
+                                placeholder="Ex: Prova 1, Trabalho..."
+                                className="mt-1 text-sm"
+                              />
+                            </div>
                             <div>
                               <Label className="text-xs text-gray-700">Pontos Obtidos</Label>
                               <Input
@@ -320,14 +344,20 @@ const DisciplinasParciaisList = ({
                             </div>
                           </div>
                         </div>
-                      ) : (
-                        // Modo visualização
+                      ) : (                        // Modo visualização
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
-                            <span>Atividade {index + 1}: <strong>{atividade.notaObtida}</strong> pontos obtidos</span>
-                            <span className="text-gray-500 ml-2">
-                              (de {atividade.notaTotal} pontos da atividade - {((atividade.notaObtida / atividade.notaTotal) * 100).toFixed(1)}%)
-                            </span>
+                            <div>
+                              <span className="font-medium text-gray-800">
+                                {atividade.nome || `Atividade ${index + 1}`}
+                              </span>
+                              <span className="ml-2">
+                                <strong>{atividade.notaObtida}</strong> pontos obtidos
+                              </span>
+                            </div>
+                            <div className="text-gray-500 text-xs mt-1">
+                              {atividade.notaTotal} pontos totais - {((atividade.notaObtida / atividade.notaTotal) * 100).toFixed(1)}% de aproveitamento
+                            </div>
                           </div>
                           <div className="flex gap-1 ml-3">
                             <Button

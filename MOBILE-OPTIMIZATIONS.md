@@ -141,3 +141,137 @@ A aplicação agora oferece uma experiência mobile nativa completa!
 - **Botão "Adicionar para aula dupla"**: verde sólido (`bg-green-600 hover:bg-green-700`)
 - **Estado desabilitado**: cinza para botões inativos
 - **Contraste melhorado**: texto branco sobre fundos coloridos
+
+## 🛠️ **CORREÇÕES DE BUGS IMPLEMENTADAS**
+
+### 🚨 **Service Worker: "Failed to convert value to 'Response'"**
+**Problema**: Service Worker tentava retornar valores inválidos no evento fetch
+**Solução**: 
+- Novo Service Worker robusto com tratamento de erro completo
+- Sempre retorna objeto `Response` válido, mesmo em caso de erro
+- Ignora requisições de desenvolvimento do Vite (HMR, src/, @vite/)
+- Fallback HTML bonito para páginas offline
+
+### 📱 **Meta Tag Deprecada**
+**Problema**: `apple-mobile-web-app-capable` estava deprecada
+**Solução**: 
+- Adicionada tag recomendada: `<meta name="mobile-web-app-capable" content="yes">`
+- Mantida compatibilidade com tag antiga
+
+### 🖼️ **Ícone 144x144 Corrompido**
+**Problema**: Erro ao carregar ícone do Manifest
+**Solução**:
+- Ícones regenerados com script Python
+- Caminhos corrigidos no manifest.json (./icons/ em vez de /icons/)
+- Verificação de integridade dos PNGs
+
+### 🔌 **WebSocket Vite/HMR**
+**Problema**: Falha de conexão WebSocket em desenvolvimento
+**Solução**:
+- Service Worker ignora completamente requisições WebSocket
+- Padrões de desenvolvimento ignorados: `/@vite/`, `/src/`, `?t=`
+- Não interfere mais com Hot Module Replacement
+
+---
+
+## 🚀 **SOLUÇÃO DEFINITIVA PARA ERROS DE CONSOLE**
+
+### 🛠️ **Service Worker Desabilitado em Desenvolvimento**
+**Solução Implementada**:
+- Service Worker agora só ativa em **produção** por padrão
+- Em desenvolvimento: desabilitado para evitar conflitos com Vite HMR
+- **Como habilitar em dev**: `localStorage.setItem('enableServiceWorker', 'true')`
+
+### 🧹 **Ferramenta de Reset Completa**
+**Página de Reset**: `http://localhost:8080/reset-sw.html`
+
+Funcionalidades:
+- ✅ **Limpeza completa**: Remove todos os caches e Service Workers
+- ✅ **Controle de dev**: Habilita/desabilita Service Worker em desenvolvimento
+- ✅ **Status em tempo real**: Mostra estado atual dos caches e Service Workers
+- ✅ **Recarregamento limpo**: Força reload sem cache
+
+### 📋 **PASSOS PARA RESOLVER ERROS**
+
+1. **Acesse**: `http://localhost:8080/reset-sw.html`
+2. **Clique**: "Limpar Todo Cache e Service Worker" 
+3. **Clique**: "Desabilitar Service Worker em Dev"
+4. **Clique**: "Recarregar sem Cache"
+5. **Volte**: para `http://localhost:8080/`
+
+### 🎯 **Status dos Problemas**
+
+| Problema | Status | Solução |
+|----------|--------|---------|
+| Service Worker TypeError | ✅ **RESOLVIDO** | SW desabilitado em dev |
+| Meta tag deprecada | ✅ **RESOLVIDO** | Tag atualizada |
+| Ícone 144x144 corrompido | ✅ **RESOLVIDO** | Ícones regenerados |
+| WebSocket Vite/HMR | ✅ **RESOLVIDO** | SW não interfere mais |
+
+### 🏁 **RESULTADO ESPERADO**
+
+Console limpo mostrando apenas:
+```
+🚧 Service Worker desabilitado em desenvolvimento
+💡 Para habilitar: localStorage.setItem("enableServiceWorker", "true")
+```
+
+**Nenhum erro adicional deve aparecer!** 🎉
+
+---
+
+## ✨ **NOVA FUNCIONALIDADE: NOMES PERSONALIZADOS PARA ATIVIDADES**
+
+### 📝 **O que foi implementado:**
+
+#### 🔧 **Tipo Atividade Atualizado**
+```typescript
+export interface Atividade {
+  id: string;
+  nome?: string;        // ✅ NOVO: Campo opcional para nome personalizado
+  notaObtida: number;
+  notaTotal: number;
+}
+```
+
+#### 📱 **Formulário de Nova Atividade**
+- **Campo adicional**: "Nome da Atividade (opcional)"
+- **Placeholder**: "Ex: Prova 1, Trabalho..."
+- **Layout responsivo**: Grid expandido para 4 colunas (nome + pontos + total + botões)
+- **Funcionalidade**: Campo salva automaticamente, vazio = undefined
+
+#### ✏️ **Formulário de Edição**
+- **Campo de nome** incluído no modo de edição
+- **Título dinâmico**: "Editando Prova 1" em vez de "Editando Atividade 1"
+- **Preservação**: Nome existente é carregado para edição
+
+#### 🎨 **Visualização Melhorada**
+- **Nome personalizado**: Exibe nome da atividade quando disponível
+- **Fallback inteligente**: "Atividade X" quando nome não informado
+- **Layout aprimorado**: 
+  - Linha 1: Nome da atividade + pontos obtidos
+  - Linha 2: Detalhes (pontos totais + porcentagem)
+
+### 🎯 **Experiência do Usuário:**
+
+#### ➕ **Ao Adicionar Atividade:**
+1. Usuário clica "Adicionar Atividade"
+2. Formulário aparece com **4 campos**:
+   - Nome da Atividade (opcional)
+   - Pontos Obtidos
+   - Pontos Totais da Atividade
+   - Botões (Adicionar + Cancelar)
+
+#### 👀 **Na Lista de Atividades:**
+- **Com nome**: "Prova 1 - 85 pontos obtidos"
+- **Sem nome**: "Atividade 1 - 85 pontos obtidos"
+- **Detalhe**: "100 pontos totais - 85% de aproveitamento"
+
+#### ✏️ **Ao Editar:**
+- **Título**: "Editando Prova 1" ou "Editando Atividade 2"
+- **Campos preenchidos**: Nome atual (se existir) + notas
+
+### 💾 **Compatibilidade:**
+- ✅ **Backward compatible**: Atividades existentes continuam funcionando
+- ✅ **Opcional**: Campo nome é opcional, não obrigatório
+- ✅ **Migração automática**: Sem necessidade de migrar dados existentes

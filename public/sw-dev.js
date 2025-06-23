@@ -1,7 +1,7 @@
 // Service Worker simplificado para desenvolvimento e produção
-const CACHE_NAME = 'cr-calc-v1.2.0';
-const STATIC_CACHE = 'cr-calc-static-v1.2.0';
-const DYNAMIC_CACHE = 'cr-calc-dynamic-v1.2.0';
+const CACHE_NAME = 'cr-calc-v1.1.0';
+const STATIC_CACHE = 'cr-calc-static-v1.1.0';
+const DYNAMIC_CACHE = 'cr-calc-dynamic-v1.1.0';
 
 // Recursos básicos para cache
 const STATIC_ASSETS = [
@@ -46,9 +46,10 @@ self.addEventListener('activate', (event) => {
   
   event.waitUntil(
     caches.keys()
-      .then((cacheNames) => {        return Promise.all(
+      .then((cacheNames) => {
+        return Promise.all(
           cacheNames.map((cacheName) => {
-            if (!cacheName.includes('v1.2.0')) {
+            if (!cacheName.includes('v1.1.0')) {
               console.log('🗑️ Removendo cache antigo:', cacheName);
               return caches.delete(cacheName);
             }
