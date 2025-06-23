@@ -3,6 +3,7 @@ import { DisciplinaParcial } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { 
   Calendar, 
   Plus, 
@@ -38,6 +39,7 @@ const ControleFaltas = ({
 }: ControleFaltasProps) => {
   const [editandoFaltas, setEditandoFaltas] = useState(false);
   const [faltasTemp, setFaltasTemp] = useState('');
+  const isMobile = useIsMobile();
 
   const faltasAtuais = disciplina.faltas || 0;
   const maxFaltas = calcularMaximoFaltas(disciplina.creditos);
@@ -187,42 +189,76 @@ const ControleFaltas = ({
                 Cancelar
               </Button>
             </div>
-          </div>
-        ) : (
+          </div>        ) : (
           <div className="space-y-2">
-            {/* Botão principal "Faltei Hoje" */}
-            <Button
-              onClick={handleFalteiHoje}
-              className={`w-full ${
-                risco.status === 'reprovado' 
-                  ? 'bg-red-600 hover:bg-red-700' 
-                  : risco.status === 'critico'
-                  ? 'bg-orange-600 hover:bg-orange-700'
-                  : 'bg-blue-600 hover:bg-blue-700'
-              } text-white`}
-              disabled={risco.status === 'reprovado'}
-            >
-              <Calendar className="w-4 h-4 mr-2" />
-              {risco.status === 'reprovado' ? 'Reprovado por Faltas' : 'Faltei Hoje'}
-            </Button>            {/* Controles de ajuste fino */}
-            <div className="flex gap-2">
-              <Button
-                onClick={() => onRemoverFalta(disciplina.id)}
-                disabled={faltasAtuais === 0}
-                size="sm"
-                className="flex-1 bg-red-600 hover:bg-red-700 text-white disabled:bg-gray-300 disabled:text-gray-500"
-              >
-                <Minus className="w-3 h-3 mr-1" />
-                Remover
-              </Button>              <Button
-                onClick={() => onAdicionarAulaDupla(disciplina.id)}
-                size="sm"
-                className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-              >
-                <Plus className="w-3 h-3 mr-1" />
-                Adicionar para aula dupla
-              </Button>
-            </div>
+            {/* Layout para Mobile - botões lado a lado */}
+            {isMobile ? (
+              <div className="flex gap-2">
+                <Button
+                  onClick={handleFalteiHoje}
+                  className={`flex-1 ${
+                    risco.status === 'reprovado' 
+                      ? 'bg-red-600 hover:bg-red-700' 
+                      : risco.status === 'critico'
+                      ? 'bg-orange-600 hover:bg-orange-700'
+                      : 'bg-blue-600 hover:bg-blue-700'
+                  } text-white`}
+                  disabled={risco.status === 'reprovado'}
+                >
+                  <Calendar className="w-4 h-4 mr-2" />
+                  {risco.status === 'reprovado' ? 'Reprovado' : 'Faltei Hoje'}
+                </Button>
+                
+                <Button
+                  onClick={() => onRemoverFalta(disciplina.id)}
+                  disabled={faltasAtuais === 0}
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white disabled:bg-gray-300 disabled:text-gray-500"
+                >
+                  <Minus className="w-4 h-4 mr-2" />
+                  Remover
+                </Button>
+              </div>
+            ) : (
+              /* Layout para Desktop - layout original */
+              <>
+                <Button
+                  onClick={handleFalteiHoje}
+                  className={`w-full ${
+                    risco.status === 'reprovado' 
+                      ? 'bg-red-600 hover:bg-red-700' 
+                      : risco.status === 'critico'
+                      ? 'bg-orange-600 hover:bg-orange-700'
+                      : 'bg-blue-600 hover:bg-blue-700'
+                  } text-white`}
+                  disabled={risco.status === 'reprovado'}
+                >
+                  <Calendar className="w-4 h-4 mr-2" />
+                  {risco.status === 'reprovado' ? 'Reprovado por Faltas' : 'Faltei Hoje'}
+                </Button>
+                
+                {/* Controles de ajuste fino - apenas desktop */}
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => onRemoverFalta(disciplina.id)}
+                    disabled={faltasAtuais === 0}
+                    size="sm"
+                    className="flex-1 bg-red-600 hover:bg-red-700 text-white disabled:bg-gray-300 disabled:text-gray-500"
+                  >
+                    <Minus className="w-3 h-3 mr-1" />
+                    Remover
+                  </Button>
+
+                  <Button
+                    onClick={() => onAdicionarAulaDupla(disciplina.id)}
+                    size="sm"
+                    className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    <Plus className="w-3 h-3 mr-1" />
+                    Adicionar para aula dupla
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>

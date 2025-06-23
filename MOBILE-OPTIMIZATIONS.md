@@ -275,3 +275,58 @@ export interface Atividade {
 - ✅ **Backward compatible**: Atividades existentes continuam funcionando
 - ✅ **Opcional**: Campo nome é opcional, não obrigatório
 - ✅ **Migração automática**: Sem necessidade de migrar dados existentes
+
+## 📱 **NOVA OTIMIZAÇÃO: CONTROLE DE FALTAS SIMPLIFICADO PARA MOBILE**
+
+### 🎯 **O que foi implementado:**
+
+#### 📱 **Layout Mobile Completamente Reorganizado**
+- **Dois botões lado a lado**: "Faltei Hoje" e "Remover" ficam na mesma linha
+- **Botão removido**: "Adicionar para aula dupla" não existe em mobile
+- **Layout otimizado**: Interface compacta e focada para toque
+- **Tamanhos iguais**: Ambos os botões ocupam 50% da largura cada
+
+#### 🖥️ **Desktop mantido**
+- **Layout original**: Botão "Faltei Hoje" em linha própria
+- **Controles em linha**: "Remover" e "Adicionar aula dupla" na segunda linha
+- **Funcionalidade completa**: Todos os 3 botões mantidos
+
+### 🔧 **Implementação Técnica:**
+```tsx
+{isMobile ? (
+  // Mobile: 2 botões lado a lado
+  <div className="flex gap-2">
+    <Button className="flex-1">Faltei Hoje</Button>
+    <Button className="flex-1">Remover</Button>
+  </div>
+) : (
+  // Desktop: layout original
+  <>
+    <Button className="w-full">Faltei Hoje</Button>
+    <div className="flex gap-2">
+      <Button>Remover</Button>
+      <Button>Adicionar para aula dupla</Button>
+    </div>
+  </>
+)}
+```
+
+### 🎯 **Layout Resultante:**
+
+#### 📱 **Mobile:**
+```
+[Faltei Hoje] [Remover]
+```
+
+#### 🖥️ **Desktop:**
+```
+[     Faltei Hoje     ]
+[Remover] [Aula Dupla]
+```
+
+### ✨ **Benefícios:**
+- ✅ **Interface mais compacta** em mobile
+- ✅ **Acesso rápido** às ações principais
+- ✅ **Otimizado para toque** com dedos
+- ✅ **Menos espaço vertical** utilizado
+- ✅ **Experiência consistente** por dispositivo
