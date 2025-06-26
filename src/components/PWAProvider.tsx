@@ -7,62 +7,90 @@ interface PWAProps {
 export const PWAProvider = ({ children }: PWAProps) => {
   const [isInstallable, setIsInstallable] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [hasError, setHasError] = useState(false);
+
   useEffect(() => {
-    // Só registra Service Worker em produção ou quando explicitamente habilitado
-    const isDev = import.meta.env.DEV;
-    const forceServiceWorker = localStorage.getItem('enableServiceWorker') === 'true';
-    
-    if ('serviceWorker' in navigator && (!isDev || forceServiceWorker)) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-          .then((registration) => {
-            console.log('✅ Service Worker registrado:', registration);
-          })
-          .catch((error) => {
-            console.error('❌ Falha ao registrar Service Worker:', error);
-          });
-      });
-    } else if (isDev) {
-      console.log('🚧 Service Worker desabilitado em desenvolvimento');
-      console.log('💡 Para habilitar: localStorage.setItem("enableServiceWorker", "true")');
+    try {
+      // Só registra Service Worker em produção ou quando explicitamente habilitado
+      const isDev = import.meta.env.DEV;
+      const forceServiceWorker = typeof localStorage !== 'undefined' && 
+        localStorage.getItem('enableServiceWorker') === 'true';
+      
+      if ('serviceWorker' in navigator && (!isDev || forceServiceWorker)) {
+        const registerSW = () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+              console.log('✅ Service Worker registrado:', registration);
+            })
+            .catch((error) => {
+              console.error('❌ Falha ao registrar Service Worker:', error);
+              // Não define hasError para não quebrar a aplicação
+            });
+        };
+
+        if (document.readyState === 'loading') {
+          window.addEventListener('load', registerSW);
+        } else {
+          registerSW();
+        }
+      } else if (isDev) {
+        console.log('🚧 Service Worker desabilitado em desenvolvimento');
+        console.log('💡 Para habilitar: localStorage.setItem("enableServiceWorker", "true")');
+      }
+    } catch (error) {
+      console.error('❌ Erro ao configurar PWA:', error);
+      setHasError(true);
     }
 
-    // Detectar se app é instalável
-    const handleBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-      setIsInstallable(true);
-    };
+    try {
+      // Detectar se app é instalável
+      const handleBeforeInstallPrompt = (e: Event) => {
+        e.preventDefault();
+        setDeferredPrompt(e);
+        setIsInstallable(true);
+      };
 
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
-    // Detectar quando app foi instalado
-    window.addEventListener('appinstalled', () => {
-      console.log('🎉 PWA foi instalada!');
-      setIsInstallable(false);
-      setDeferredPrompt(null);
-    });
+      // Detectar quando app foi instalado
+      window.addEventListener('appinstalled', () => {
+        console.log('🎉 PWA foi instalada!');
+        setIsInstallable(false);
+        setDeferredPrompt(null);
+      });
 
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    };
+      return () => {
+        window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      };
+    } catch (error) {
+      console.error('❌ Erro ao configurar eventos PWA:', error);
+    }
   }, []);
 
   const installApp = async () => {
     if (deferredPrompt) {
-      deferredPrompt.prompt();
-      const choiceResult = await deferredPrompt.userChoice;
-      
-      if (choiceResult.outcome === 'accepted') {
-        console.log('✅ Usuário aceitou instalar a PWA');
-      } else {
-        console.log('❌ Usuário recusou instalar a PWA');
+      try {
+        deferredPrompt.prompt();
+        const choiceResult = await deferredPrompt.userChoice;
+        
+        if (choiceResult.outcome === 'accepted') {
+          console.log('✅ Usuário aceitou instalar a PWA');
+        } else {
+          console.log('❌ Usuário recusou instalar a PWA');
+        }
+        
+        setDeferredPrompt(null);
+        setIsInstallable(false);
+      } catch (error) {
+        console.error('❌ Erro ao instalar PWA:', error);
       }
-      
-      setDeferredPrompt(null);
-      setIsInstallable(false);
     }
   };
+
+  // Se houver erro crítico, ainda renderiza o children
+  if (hasError) {
+    console.warn('⚠️ PWA com erro, mas aplicação continuará funcionando');
+  }
 
   return (
     <>
@@ -115,30 +143,35 @@ export const usePWA = () => {
   const [isInstalled, setIsInstalled] = useState(false);
 
   useEffect(() => {
-    // Verifica se está rodando em modo standalone (PWA instalada)
-    const checkStandalone = () => {
-      return window.matchMedia('(display-mode: standalone)').matches ||
-             (window.navigator as any).standalone === true;
-    };
+    try {
+      // Verifica se está rodando em modo standalone (PWA instalada)
+      const checkStandalone = () => {
+        return window.matchMedia('(display-mode: standalone)').matches ||
+               (window.navigator as any).standalone === true;
+      };
 
-    setIsStandalone(checkStandalone());
-    setIsInstalled(checkStandalone());
+      setIsStandalone(checkStandalone());
+      setIsInstalled(checkStandalone());
 
-    // Listener para mudanças no display mode
-    const mediaQuery = window.matchMedia('(display-mode: standalone)');
-    const handleChange = (e: MediaQueryListEvent) => {
-      setIsStandalone(e.matches);
-      setIsInstalled(e.matches);
-    };
+      // Listener para mudanças no display mode
+      const mediaQuery = window.matchMedia('(display-mode: standalone)');
+      const handleChange = (e: MediaQueryListEvent) => {
+        setIsStandalone(e.matches);
+        setIsInstalled(e.matches);
+      };
 
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
+      mediaQuery.addEventListener('change', handleChange);
+      return () => mediaQuery.removeEventListener('change', handleChange);
+    } catch (error) {
+      console.error('❌ Erro no hook usePWA:', error);
+      return () => {}; // cleanup vazio em caso de erro
+    }
   }, []);
 
   return {
     isStandalone,
     isInstalled,
-    isOnline: navigator.onLine
+    isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true
   };
 };
 

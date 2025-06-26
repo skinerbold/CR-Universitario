@@ -9,7 +9,8 @@
   "orientation": "portrait-primary",
   "scope": "/",
   "lang": "pt-BR",
-  "categories": ["education", "productivity", "utilities"],  "icons": [
+  "categories": ["education", "productivity", "utilities"],
+  "prefer_related_applications": false,  "icons": [
     {
       "src": "/icons/icon-72x72.png",
       "sizes": "72x72",

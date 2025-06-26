@@ -1,7 +1,7 @@
-// Service Worker simplificado para desenvolvimento e produção
-const CACHE_NAME = 'cr-calc-v1.2.0';
-const STATIC_CACHE = 'cr-calc-static-v1.2.0';
-const DYNAMIC_CACHE = 'cr-calc-dynamic-v1.2.0';
+// Service Worker robusto para desenvolvimento e produção
+const CACHE_NAME = 'cr-calc-v1.2.1';
+const STATIC_CACHE = 'cr-calc-static-v1.2.1';
+const DYNAMIC_CACHE = 'cr-calc-dynamic-v1.2.1';
 
 // Recursos básicos para cache
 const STATIC_ASSETS = [
@@ -17,23 +17,32 @@ const DEV_PATTERNS = [
   '?t=',
   'chrome-extension:',
   'ws://',
-  'wss://'
+  'wss://',
+  '/node_modules/'
 ];
 
-console.log('🚀 Service Worker carregado com sucesso!');
+console.log('🚀 Service Worker carregado com sucesso! Versão 1.2.1');
 
 // Instalação
 self.addEventListener('install', (event) => {
-  console.log('🔧 Service Worker: Instalando...');
+  console.log('🔧 Service Worker: Instalando versão 1.2.1...');
   
   event.waitUntil(
     caches.open(STATIC_CACHE)
       .then((cache) => {
         console.log('📦 Service Worker: Cache inicial criado');
-        return cache.addAll(STATIC_ASSETS);
+        // Tenta adicionar ao cache, mas não falha se algum recurso não estiver disponível
+        return Promise.allSettled(
+          STATIC_ASSETS.map(asset => cache.add(asset))
+        ).then(results => {
+          const failed = results.filter(r => r.status === 'rejected');
+          if (failed.length > 0) {
+            console.warn('⚠️ Alguns recursos não puderam ser cacheados:', failed);
+          }
+        });
       })
       .catch((error) => {
-        console.warn('⚠️ Erro no cache inicial:', error);
+        console.warn('⚠️ Erro no cache inicial (não crítico):', error);
       })
   );
   
@@ -42,20 +51,27 @@ self.addEventListener('install', (event) => {
 
 // Ativação
 self.addEventListener('activate', (event) => {
-  console.log('✅ Service Worker: Ativando...');
+  console.log('✅ Service Worker: Ativando versão 1.2.1...');
   
   event.waitUntil(
     caches.keys()
-      .then((cacheNames) => {        return Promise.all(
+      .then((cacheNames) => {
+        return Promise.all(
           cacheNames.map((cacheName) => {
-            if (!cacheName.includes('v1.2.0')) {
+            if (!cacheName.includes('v1.2.1')) {
               console.log('🗑️ Removendo cache antigo:', cacheName);
               return caches.delete(cacheName);
             }
           })
         );
       })
-      .then(() => self.clients.claim())
+      .then(() => {
+        console.log('✅ Service Worker ativado e assumiu controle');
+        return self.clients.claim();
+      })
+      .catch((error) => {
+        console.warn('⚠️ Erro na ativação (não crítico):', error);
+      })
   );
 });
 
@@ -179,30 +195,70 @@ function createFallbackResponse(request) {
         <head>
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Aplicativo Offline</title>
+          <title>Calculadora CR - Offline</title>
           <style>
-            body { font-family: Arial, sans-serif; padding: 2rem; text-align: center; }
-            .container { max-width: 400px; margin: 0 auto; }
+            body { 
+              font-family: Arial, sans-serif; 
+              padding: 2rem; 
+              text-align: center; 
+              background: #f9fafb;
+              margin: 0;
+              min-height: 100vh;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            }
+            .container { 
+              max-width: 400px; 
+              margin: 0 auto; 
+              background: white;
+              padding: 2rem;
+              border-radius: 8px;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            }
             .icon { font-size: 3rem; margin-bottom: 1rem; }
             .message { color: #666; margin-bottom: 1rem; }
             .button { 
-              background: #3b82f6; color: white; padding: 0.5rem 1rem; 
-              border: none; border-radius: 0.25rem; cursor: pointer; 
+              background: #3b82f6; 
+              color: white; 
+              padding: 0.75rem 1.5rem; 
+              border: none; 
+              border-radius: 0.375rem; 
+              cursor: pointer; 
+              font-size: 1rem;
+              margin: 0.5rem;
+              transition: background-color 0.2s;
             }
+            .button:hover { background: #2563eb; }
+            .secondary { background: #6b7280; }
+            .secondary:hover { background: #4b5563; }
           </style>
         </head>
         <body>
           <div class="container">
             <div class="icon">📱</div>
-            <h1>Aplicativo Offline</h1>
-            <p class="message">Você está offline. Alguns recursos podem não estar disponíveis.</p>
+            <h1>Calculadora CR</h1>
+            <p class="message">Você está offline. A aplicação pode não estar funcionando corretamente.</p>
             <button class="button" onclick="location.reload()">Tentar Novamente</button>
+            <button class="button secondary" onclick="clearAndReload()">Limpar Cache</button>
+            <script>
+              function clearAndReload() {
+                if ('caches' in window) {
+                  caches.keys().then(names => {
+                    Promise.all(names.map(name => caches.delete(name)))
+                      .then(() => location.reload());
+                  });
+                } else {
+                  location.reload();
+                }
+              }
+            </script>
           </div>
         </body>
       </html>
     `, {
-      status: 503,
-      statusText: 'Service Unavailable',
+      status: 200,
+      statusText: 'OK',
       headers: { 'Content-Type': 'text/html; charset=utf-8' }
     });
   }
