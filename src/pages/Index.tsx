@@ -6,6 +6,8 @@ import DisciplinaForm from '@/components/DisciplinaForm';
 import DisciplinaParcialForm from '@/components/DisciplinaParcialForm';
 import DisciplinasList from '@/components/DisciplinasList';
 import DisciplinasParciaisList from '@/components/DisciplinasParciaisList';
+import PeriodoForm from '@/components/PeriodoForm';
+import PeriodosList from '@/components/PeriodosList';
 import ResultadoCalculos from '@/components/ResultadoCalculos';
 import CRDesejado from '@/components/CRDesejado';
 import Calculadora from '@/components/Calculadora';
@@ -19,6 +21,7 @@ const Index = () => {
   const {
     disciplinas,
     disciplinasParciais,
+    periodos,
     tipoCalculo,
     resultado,
     adicionarDisciplina,
@@ -30,6 +33,9 @@ const Index = () => {
     removerDisciplinaParcial,
     limparDisciplinas,
     limparDisciplinasParciais,
+    adicionarPeriodo,
+    removerPeriodo,
+    limparPeriodos,
     setTipoCalculo,
     adicionarFalta,
     adicionarAulaDupla,
@@ -72,6 +78,28 @@ const Index = () => {
                 >
                   <RotateCcw className="w-4 h-4 mr-2" />
                   Limpar Todas as Disciplinas
+                </Button>
+              </div>
+            )}
+          </>
+        ) : tipoCalculo === 'curso' ? (
+          <>
+            <PeriodoForm onAddPeriodo={adicionarPeriodo} />
+            
+            <PeriodosList 
+              periodos={periodos}
+              onRemovePeriodo={removerPeriodo}
+            />
+            
+            {periodos.length > 0 && (
+              <div className="mb-6 flex justify-center">
+                <Button
+                  onClick={limparPeriodos}
+                  variant="outline"
+                  className="text-red-600 border-red-300 hover:bg-red-50"
+                >
+                  <RotateCcw className="w-4 h-4 mr-2" />
+                  Limpar Todos os Períodos
                 </Button>
               </div>
             )}

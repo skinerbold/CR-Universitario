@@ -1,6 +1,5 @@
-
 import { useState, useMemo, useCallback } from 'react';
-import { Disciplina, CalculoResultado, TipoCalculo, DisciplinaParcial, Atividade } from '@/types';
+import { Disciplina, CalculoResultado, TipoCalculo, DisciplinaParcial, Atividade, Periodo } from '@/types';
 import { usePersistentState, useCalculadoraPersistence } from './usePersistentState';
 import { estaReprovadoPorFaltas } from '@/utils/faltasUtils';
 
@@ -15,6 +14,11 @@ export const useCalculadora = () => {
   
   const [disciplinasParciais, setDisciplinasParciais] = usePersistentState<DisciplinaParcial[]>(
     getStorageKey('disciplinas-parciais'),
+    []
+  );
+
+  const [periodos, setPeriodos] = usePersistentState<Periodo[]>(
+    getStorageKey('periodos'),
     []
   );
   
@@ -83,6 +87,35 @@ export const useCalculadora = () => {
     updateLastModified();
   }, [setDisciplinasParciais, updateLastModified]);
 
+  const adicionarPeriodo = useCallback((periodo: Omit<Periodo, 'id' | 'numero'>) => {
+    const periodoComId: Periodo = {
+      ...periodo,
+      id: Date.now().toString() + Math.random().toString(36),
+      numero: periodos.length + 1,
+      nome: `${periodos.length + 1}º Período`
+    };
+    setPeriodos(prev => [...prev, periodoComId]);
+    updateLastModified();
+  }, [setPeriodos, periodos.length, updateLastModified]);
+
+  const removerPeriodo = useCallback((id: string) => {
+    setPeriodos(prev => {
+      const filtered = prev.filter(p => p.id !== id);
+      // Reordena os números dos períodos
+      return filtered.map((periodo, index) => ({
+        ...periodo,
+        numero: index + 1,
+        nome: `${index + 1}º Período`
+      }));
+    });
+    updateLastModified();
+  }, [setPeriodos, updateLastModified]);
+
+  const limparPeriodos = useCallback(() => {
+    setPeriodos([]);
+    updateLastModified();
+  }, [setPeriodos, updateLastModified]);
+
   const calcularNotaParcial = (atividades: Atividade[]): number => {
     if (atividades.length === 0) return 0;
     
@@ -116,52 +149,89 @@ export const useCalculadora = () => {
     });
   }, [disciplinasParciais]);
 
-  const resultado = useMemo((): CalculoResultado | null => {
+  const calcularCRParcial = (disciplinasComNotas: DisciplinaParcial[]) => {
+    if (disciplinasComNotas.length === 0) return null;
+
+    const disciplinasComNota = disciplinasComNotas.filter(d => d.atividades.length > 0);
+    if (disciplinasComNota.length === 0) return null;
+
+    const somaNotasCreditos = disciplinasComNota.reduce(
+      (acc, disciplina) => acc + (disciplina.notaParcial! * disciplina.creditos),
+      0
+    );
+    
+    const totalCreditos = disciplinasComNota.reduce(
+      (acc, disciplina) => acc + disciplina.creditos,
+      0
+    );
+
+    const mediaGeral = totalCreditos > 0 ? somaNotasCreditos / totalCreditos : 0;
+
+    return {
+      mediaGeral,
+      totalCreditos,
+      totalDisciplinas: disciplinasComNota.length
+    };
+  };
+
+  const calcularCRCurso = (periodos: Periodo[]) => {
+    if (periodos.length === 0) return null;
+
+    // Coleta todas as disciplinas de todos os períodos
+    const todasDisciplinas = periodos.flatMap(periodo => periodo.disciplinas);
+    
+    if (todasDisciplinas.length === 0) return null;
+
+    const somaNotasCreditos = todasDisciplinas.reduce(
+      (acc, disciplina) => acc + (disciplina.nota * disciplina.creditos),
+      0
+    );
+    
+    const totalCreditos = todasDisciplinas.reduce(
+      (acc, disciplina) => acc + disciplina.creditos,
+      0
+    );
+
+    const mediaGeral = totalCreditos > 0 ? somaNotasCreditos / totalCreditos : 0;
+
+    return {
+      mediaGeral,
+      totalCreditos,
+      totalDisciplinas: todasDisciplinas.length
+    };
+  };
+
+  const calcularCR = (disciplinas: Disciplina[]) => {
+    if (disciplinas.length === 0) return null;
+
+    const somaNotasCreditos = disciplinas.reduce(
+      (acc, disciplina) => acc + (disciplina.nota * disciplina.creditos),
+      0
+    );
+    
+    const totalCreditos = disciplinas.reduce(
+      (acc, disciplina) => acc + disciplina.creditos,
+      0
+    );
+
+    const mediaGeral = totalCreditos > 0 ? somaNotasCreditos / totalCreditos : 0;
+
+    return {
+      mediaGeral,
+      totalCreditos,
+      totalDisciplinas: disciplinas.length
+    };
+  };
+
+  const resultado = useMemo(() => {
     if (tipoCalculo === 'parcial') {
-      if (disciplinasParciaisComNotas.length === 0) return null;
-
-      const disciplinasComNota = disciplinasParciaisComNotas.filter(d => d.atividades.length > 0);
-      if (disciplinasComNota.length === 0) return null;
-
-      const somaNotasCreditos = disciplinasComNota.reduce(
-        (acc, disciplina) => acc + (disciplina.notaParcial! * disciplina.creditos),
-        0
-      );
-      
-      const totalCreditos = disciplinasComNota.reduce(
-        (acc, disciplina) => acc + disciplina.creditos,
-        0
-      );
-
-      const mediaGeral = totalCreditos > 0 ? somaNotasCreditos / totalCreditos : 0;
-
-      return {
-        mediaGeral,
-        totalCreditos,
-        totalDisciplinas: disciplinasComNota.length
-      };
+      return calcularCRParcial(disciplinasParciaisComNotas);
+    } else if (tipoCalculo === 'curso') {
+      return calcularCRCurso(periodos);
     } else {
-      if (disciplinas.length === 0) return null;
-
-      const somaNotasCreditos = disciplinas.reduce(
-        (acc, disciplina) => acc + (disciplina.nota * disciplina.creditos),
-        0
-      );
-      
-      const totalCreditos = disciplinas.reduce(
-        (acc, disciplina) => acc + disciplina.creditos,
-        0
-      );
-
-      const mediaGeral = totalCreditos > 0 ? somaNotasCreditos / totalCreditos : 0;
-
-      return {
-        mediaGeral,
-        totalCreditos,
-        totalDisciplinas: disciplinas.length
-      };
+      return calcularCR(disciplinas);
     }
-  }, [disciplinas, disciplinasParciaisComNotas, tipoCalculo]);
+  }, [tipoCalculo, disciplinas, disciplinasParciaisComNotas, periodos]);
 
   const editarAtividade = useCallback((disciplinaId: string, atividadeId: string, dadosAtualizados: Omit<Atividade, 'id'>) => {
     setDisciplinasParciais(prev => 
@@ -252,6 +322,7 @@ export const useCalculadora = () => {
   return {
     disciplinas,
     disciplinasParciais: disciplinasParciaisComNotas,
+    periodos,
     tipoCalculo,
     resultado,
     adicionarDisciplina,
@@ -267,6 +338,9 @@ export const useCalculadora = () => {
     removerDisciplinaParcial,
     limparDisciplinas,
     limparDisciplinasParciais,
+    adicionarPeriodo,
+    removerPeriodo,
+    limparPeriodos,
     setTipoCalculo,
     // Funções de persistência
     persistence: {

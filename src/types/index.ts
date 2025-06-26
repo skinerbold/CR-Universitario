@@ -6,6 +6,13 @@ export interface Disciplina {
   creditos: number;
 }
 
+export interface Periodo {
+  id: string;
+  numero: number;
+  nome: string; // "1º Período", "2º Período", etc.
+  disciplinas: Disciplina[];
+}
+
 export interface Atividade {
   id: string;
   nome?: string;
