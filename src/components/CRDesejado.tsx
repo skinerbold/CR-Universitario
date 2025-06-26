@@ -136,13 +136,13 @@ const CRDesejado = ({ disciplinas, disciplinasParciais, tipoCalculo, crAtual }: 
 
   const handleCalcular = () => {
     if (!crDesejado) {
-      alert('Por favor, informe o CR desejado');
+      alert(`Por favor, informe o ${tipoCalculo === 'curso' ? 'CRA' : 'CR'} desejado`);
       return;
     }
 
     const crDesejadoNum = parseFloat(crDesejado);
     if (crDesejadoNum < 0 || crDesejadoNum > 100) {
-      alert('O CR desejado deve estar entre 0 e 100');
+      alert(`O ${tipoCalculo === 'curso' ? 'CRA' : 'CR'} desejado deve estar entre 0 e 100`);
       return;
     }
 
@@ -261,7 +261,7 @@ const CRDesejado = ({ disciplinas, disciplinasParciais, tipoCalculo, crAtual }: 
     <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
       <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
         <Target className="w-5 h-5" />
-        Calculadora de CR Desejado
+        Calculadora de {tipoCalculo === 'curso' ? 'CRA' : 'CR'} Desejado
       </h2>
 
       <div className="space-y-4">
@@ -276,7 +276,7 @@ const CRDesejado = ({ disciplinas, disciplinasParciais, tipoCalculo, crAtual }: 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <Label htmlFor="cr-desejado" className="text-sm font-medium text-gray-700">
-              CR Desejado (0-100)
+              {tipoCalculo === 'curso' ? 'CRA' : 'CR'} Desejado (0-100)
             </Label>
             <Input
               id="cr-desejado"
@@ -320,15 +320,15 @@ const CRDesejado = ({ disciplinas, disciplinasParciais, tipoCalculo, crAtual }: 
                   Resultado - Todas as disciplinas já têm nota
                 </h3>
                 <div className="space-y-2 text-sm">
-                  <p><strong>CR Atual:</strong> {calculos.crAtualCalculado.toFixed(2)}</p>
-                  <p><strong>CR Desejado:</strong> {calculos.crDesejado.toFixed(2)}</p>
+                  <p><strong>{tipoCalculo === 'curso' ? 'CRA' : 'CR'} Atual:</strong> {calculos.crAtualCalculado.toFixed(2)}</p>
+                  <p><strong>{tipoCalculo === 'curso' ? 'CRA' : 'CR'} Desejado:</strong> {calculos.crDesejado.toFixed(2)}</p>
                   {calculos.possivel ? (
                     <p className="text-green-700 font-medium">
-                      ✅ Parabéns! Você já atingiu o CR desejado!
+                      ✅ Parabéns! Você já atingiu o {tipoCalculo === 'curso' ? 'CRA' : 'CR'} desejado!
                     </p>
                   ) : (
                     <p className="text-red-700 font-medium">
-                      ❌ Infelizmente, com as notas atuais não é possível atingir o CR desejado.
+                      ❌ Infelizmente, com as notas atuais não é possível atingir o {tipoCalculo === 'curso' ? 'CRA' : 'CR'} desejado.
                       Faltam {Math.abs(calculos.diferenca).toFixed(2)} pontos.
                     </p>
                   )}
@@ -366,7 +366,7 @@ const CRDesejado = ({ disciplinas, disciplinasParciais, tipoCalculo, crAtual }: 
                           🎯 Meta já atingida!
                         </p>
                         <p className="text-blue-700">
-                          <strong>Parabéns! Você já alcançou o CR desejado de {calculos.crDesejado.toFixed(2)}.</strong>
+                          <strong>Parabéns! Você já alcançou o {tipoCalculo === 'curso' ? 'CRA' : 'CR'} desejado de {calculos.crDesejado.toFixed(2)}.</strong>
                           {calculos.tipoCalculo === 'parcial' && (
                             <span> Você pode relaxar nas próximas atividades.</span>
                           )}
@@ -402,7 +402,7 @@ const CRDesejado = ({ disciplinas, disciplinasParciais, tipoCalculo, crAtual }: 
                         </p>
                         {calculos.tipoCalculo === 'parcial' ? (
                           <p className="text-red-700 text-xs">
-                            Mesmo obtendo 100% dos pontos ainda disponíveis, não será possível atingir o CR desejado.
+                            Mesmo obtendo 100% dos pontos ainda disponíveis, não será possível atingir o {tipoCalculo === 'curso' ? 'CRA' : 'CR'} desejado.
                           </p>
                         ) : (
                           <p className="text-red-700 text-xs">
@@ -473,7 +473,7 @@ const CRDesejado = ({ disciplinas, disciplinasParciais, tipoCalculo, crAtual }: 
 
                     {!simulacaoAtiva ? (
                       <p className="text-sm text-purple-700">
-                        💡 Use o simulador para testar diferentes cenários de pontuação e ver se consegue atingir seu CR desejado!
+                        💡 Use o simulador para testar diferentes cenários de pontuação e ver se consegue atingir seu {tipoCalculo === 'curso' ? 'CRA' : 'CR'} desejado!
                       </p>
                     ) : (
                       <div className="space-y-4">
@@ -530,8 +530,8 @@ const CRDesejado = ({ disciplinas, disciplinasParciais, tipoCalculo, crAtual }: 
                               }`}>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                                   <div>
-                                    <p><strong>CR Simulado:</strong> {calcularSimulacao.crSimulado.toFixed(2)}</p>
-                                    <p><strong>CR Desejado:</strong> {calculos.crDesejado.toFixed(2)}</p>
+                                    <p><strong>{tipoCalculo === 'curso' ? 'CRA' : 'CR'} Simulado:</strong> {calcularSimulacao.crSimulado.toFixed(2)}</p>
+                                    <p><strong>{tipoCalculo === 'curso' ? 'CRA' : 'CR'} Desejado:</strong> {calculos.crDesejado.toFixed(2)}</p>
                                   </div>
                                   <div>
                                     {calcularSimulacao.diferenca > 0 ? (

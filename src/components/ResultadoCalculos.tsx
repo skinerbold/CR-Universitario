@@ -31,10 +31,11 @@ const ResultadoCalculos = ({ resultado, tipoCalculo }: ResultadoCalculosProps) =
     <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6">
       <h2 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
         <Award className="w-4 h-4 sm:w-5 sm:h-5" />
-        <span className="break-words">Resultado do {
-          tipoCalculo === 'periodo' ? 'Período' : 
-          tipoCalculo === 'curso' ? 'Curso' : 'CR Parcial'
-        }</span>
+        <span className="break-words">
+          {tipoCalculo === 'curso' ? 'CRA - Coeficiente de Rendimento Acadêmico' : 
+           tipoCalculo === 'periodo' ? 'CR - Coeficiente de Rendimento do Período' : 
+           'CR Parcial'}
+        </span>
       </h2>
       
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
@@ -44,7 +45,7 @@ const ResultadoCalculos = ({ resultado, tipoCalculo }: ResultadoCalculosProps) =
               {resultado.mediaGeral.toFixed(2)}
             </div>
             <div className="text-xs sm:text-sm text-gray-600 font-medium">
-              Média Ponderada
+              {tipoCalculo === 'curso' ? 'CRA' : 'Média Ponderada'}
             </div>
           </div>
         </div>
@@ -76,10 +77,16 @@ const ResultadoCalculos = ({ resultado, tipoCalculo }: ResultadoCalculosProps) =
       
       <div className="mt-4 p-4 bg-gray-50 rounded-lg">
         <p className="text-sm text-gray-600 text-center">
-          <strong>Fórmula:</strong> Média Ponderada = Σ(Nota × Créditos) ÷ Σ(Créditos)
+          <strong>Fórmula {tipoCalculo === 'curso' ? 'CRA' : 'CR'}:</strong> 
+          {tipoCalculo === 'curso' ? ' CRA = Σ(Nota × Créditos) ÷ Σ(Créditos)' : ' Média Ponderada = Σ(Nota × Créditos) ÷ Σ(Créditos)'}
           {tipoCalculo === 'parcial' && (
             <span className="block mt-1 text-xs">
               * Nota de cada disciplina = Soma dos pontos obtidos nas atividades (máx. 100 pontos por disciplina)
+            </span>
+          )}
+          {tipoCalculo === 'curso' && (
+            <span className="block mt-1 text-xs text-blue-600">
+              * CRA considera todas as disciplinas cursadas em todos os períodos do curso
             </span>
           )}
         </p>
