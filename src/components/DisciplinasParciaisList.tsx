@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import ControleFaltas from './ControleFaltas';
 import { estaReprovadoPorFaltas } from '@/utils/faltasUtils';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface DisciplinasParciaisListProps {
   disciplinas: DisciplinaParcial[];
@@ -39,7 +40,8 @@ const DisciplinasParciaisList = ({
   const [nomeAtividadeEdicao, setNomeAtividadeEdicao] = useState('');
   const [notaObtidaEdicao, setNotaObtidaEdicao] = useState('');
   const [notaTotalEdicao, setNotaTotalEdicao] = useState('');
-  const [disciplinaPulsando, setDisciplinaPulsando] = useState<string | null>(null);
+  const [boxPulsando, setBoxPulsando] = useState<string | null>(null);
+  const isMobile = useIsMobile();
 
   const toggleMinimized = (disciplinaId: string) => {
     setMinimizedDisciplinas(prev => {
@@ -85,13 +87,13 @@ const DisciplinasParciaisList = ({
       notaTotal: notaTotalNum
     });
 
-    // Ativar animação de pulsação verde
-    setDisciplinaPulsando(disciplinaId);
+    // Ativar animação de pulsação verde no box de cadastro
+    setBoxPulsando(disciplinaId);
     
     // Força o reflow para garantir que a animação funcione em mobile
     requestAnimationFrame(() => {
       setTimeout(() => {
-        setDisciplinaPulsando(null);
+        setBoxPulsando(null);
       }, 1500); // Duração da animação
     });
 
@@ -181,18 +183,10 @@ const DisciplinasParciaisList = ({
           <div
             key={disciplina.id}
             className={`border border-gray-200 rounded-lg p-4 bg-gray-50 transition-all duration-300 ${
-              disciplinaPulsando === disciplina.id 
-                ? 'green-pulse-animation !important' 
-                : disciplina.creditos === 0 
+              disciplina.creditos === 0 
                 ? 'border-l-4 border-l-orange-400 bg-orange-50'
                 : ''
             }`}
-            style={disciplinaPulsando === disciplina.id ? {
-              animationName: 'green-pulse',
-              animationDuration: '1.5s',
-              animationTimingFunction: 'ease-in-out',
-              animationFillMode: 'both'
-            } : {}}
           >            <div className="flex items-center justify-between mb-3">
               <div className="flex-1 flex items-center gap-3">
                 <div className="flex-1">
@@ -278,14 +272,25 @@ const DisciplinasParciaisList = ({
 
             {/* Formulário para adicionar atividade - Aparece logo abaixo do botão */}
             {expandedDisciplina === disciplina.id && (
-              <div className="bg-blue-50 p-4 rounded-lg border-2 border-blue-200 mb-4">
+              <div className={`bg-blue-50 p-4 rounded-lg border-2 border-blue-200 mb-4 transition-all duration-300 ${
+                boxPulsando === disciplina.id 
+                  ? 'green-pulse-animation !important' 
+                  : ''
+              }`}
+              style={boxPulsando === disciplina.id ? {
+                animationName: 'green-pulse',
+                animationDuration: '1.5s',
+                animationTimingFunction: 'ease-in-out',
+                animationFillMode: 'both'
+              } : {}}>
                 <h4 className="text-sm font-medium text-blue-800 mb-3 flex items-center gap-2">
                   <Plus className="w-4 h-4" />
                   Nova Atividade para {disciplina.nome}
-                </h4>                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div>
                     <Label htmlFor="nome-atividade" className="text-sm font-medium text-gray-700">
-                      Nome da Atividade (opcional)
+                      Nome da Atividade{isMobile ? ' (opcional)' : ''}
                     </Label>
                     <Input
                       id="nome-atividade"
