@@ -319,8 +319,8 @@ const DisciplinasParciaisList = ({
                     
                     {disciplina.modalidade === 'pontos' ? (
                       <>
-                        <span>Atividades: <strong>{disciplina.atividades.length}</strong></span>
-                        {disciplina.atividades.length > 0 && (
+                        <span>Atividades: <strong>{(disciplina.atividades || []).length}</strong></span>
+                        {(disciplina.atividades || []).length > 0 && (
                           <>
                             {(() => {
                               const faltasAtuais = disciplina.faltas || 0;
@@ -348,8 +348,8 @@ const DisciplinasParciaisList = ({
                       </>
                     ) : (
                       <>
-                        <span>Provas: <strong>{disciplina.provas.length}</strong></span>
-                        {disciplina.provas.length > 0 && (
+                        <span>Provas: <strong>{(disciplina.provas || []).length}</strong></span>
+                        {(disciplina.provas || []).length > 0 && (
                           <>
                             {(() => {
                               const faltasAtuais = disciplina.faltas || 0;
@@ -371,7 +371,7 @@ const DisciplinasParciaisList = ({
                               );
                             })()}
                             <span className="text-xs text-gray-500">
-                              ({disciplina.provas.length}/{disciplina.totalAvaliacoes || 4} avaliações)
+                              ({(disciplina.provas || []).length}/{disciplina.totalAvaliacoes || 4} avaliações)
                             </span>
                           </>
                         )}
@@ -575,10 +575,10 @@ const DisciplinasParciaisList = ({
             )}
 
             {/* Lista de atividades (sistema de pontos) */}
-            {disciplina.modalidade === 'pontos' && disciplina.atividades.length > 0 && (
+            {disciplina.modalidade === 'pontos' && (disciplina.atividades || []).length > 0 && (
               <div className="mb-3">
                 <h4 className="text-sm font-medium text-gray-700 mb-2">Atividades:</h4>                <div className="space-y-1">
-                  {disciplina.atividades.map((atividade, index) => (
+                  {(disciplina.atividades || []).map((atividade, index) => (
                     <div key={atividade.id} className="text-sm text-gray-600 bg-white p-3 rounded border">
                       {editandoAtividade?.disciplinaId === disciplina.id && editandoAtividade?.atividadeId === atividade.id ? (
                         // Modo edição
@@ -676,11 +676,11 @@ const DisciplinasParciaisList = ({
                 </div>              </div>            )}
 
             {/* Lista de provas (sistema de médias) */}
-            {disciplina.modalidade === 'medias' && disciplina.provas.length > 0 && (
+            {disciplina.modalidade === 'medias' && (disciplina.provas || []).length > 0 && (
               <div className="mb-3">
                 <h4 className="text-sm font-medium text-gray-700 mb-2">Provas:</h4>
                 <div className="space-y-1">
-                  {disciplina.provas.map((prova, index) => (
+                  {(disciplina.provas || []).map((prova, index) => (
                     <div key={prova.id} className="text-sm text-gray-600 bg-white p-3 rounded border">
                       {editandoProva?.disciplinaId === disciplina.id && editandoProva?.provaId === prova.id ? (
                         // Modo edição

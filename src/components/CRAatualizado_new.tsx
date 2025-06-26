@@ -23,9 +23,13 @@ const CRAatualizado = ({ disciplinasParciais, periodos }: CRAatualizadoProps) =>
     
     // Disciplinas parciais com nota atual - apenas com créditos > 0
     const disciplinasParciaisComNota = disciplinasParciais.filter(d => {
+      // Garantir que arrays existam
+      const atividades = d.atividades || [];
+      const provas = d.provas || [];
+      
       const temAvaliacao = d.modalidade === 'pontos' 
-        ? d.atividades.length > 0 
-        : d.provas.length > 0;
+        ? atividades.length > 0 
+        : provas.length > 0;
       return temAvaliacao && d.creditos > 0;
     });
     
@@ -74,9 +78,13 @@ const CRAatualizado = ({ disciplinasParciais, periodos }: CRAatualizadoProps) =>
     
     // Disciplinas parciais - apenas com créditos > 0 e que tenham avaliações
     const disciplinasParciaisAtivas = disciplinasParciais.filter(d => {
+      // Garantir que arrays existam
+      const atividades = d.atividades || [];
+      const provas = d.provas || [];
+      
       const temAvaliacao = d.modalidade === 'pontos' 
-        ? d.atividades.length > 0 
-        : d.provas.length > 0;
+        ? atividades.length > 0 
+        : provas.length > 0;
       return temAvaliacao && d.creditos > 0;
     });
 

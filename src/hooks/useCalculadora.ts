@@ -204,18 +204,25 @@ export const useCalculadora = () => {
 
   const disciplinasParciaisComNotas = useMemo(() => {
     return disciplinasParciais.map(disciplina => {
+      // Garantir que arrays sempre existam
+      const disciplinaSegura = {
+        ...disciplina,
+        atividades: disciplina.atividades || [],
+        provas: disciplina.provas || []
+      };
+      
       // Calcula nota baseada na modalidade da disciplina
-      const notaParcial = calcularNotaFinalDisciplina(disciplina);
-      const pontosConsumidos = disciplina.modalidade === 'pontos' 
-        ? calcularPontosConsumidos(disciplina.atividades)
+      const notaParcial = calcularNotaFinalDisciplina(disciplinaSegura);
+      const pontosConsumidos = disciplinaSegura.modalidade === 'pontos' 
+        ? calcularPontosConsumidos(disciplinaSegura.atividades)
         : 0; // No sistema de médias, não há "pontos consumidos"
       
       // Se reprovado por faltas, nota final é 0
-      const faltasAtuais = disciplina.faltas || 0;
-      const notaFinal = estaReprovadoPorFaltas(disciplina.creditos, faltasAtuais) ? 0 : notaParcial;
+      const faltasAtuais = disciplinaSegura.faltas || 0;
+      const notaFinal = estaReprovadoPorFaltas(disciplinaSegura.creditos, faltasAtuais) ? 0 : notaParcial;
       
       return {
-        ...disciplina,
+        ...disciplinaSegura,
         notaParcial: notaFinal,
         pontosConsumidos
       };
@@ -223,13 +230,17 @@ export const useCalculadora = () => {
   }, [disciplinasParciais]);
 
   const calcularCRParcial = (disciplinasComNotas: DisciplinaParcial[]) => {
-    if (disciplinasComNotas.length === 0) return null;
+    if (!disciplinasComNotas || disciplinasComNotas.length === 0) return null;
 
     // Filtra disciplinas que têm avaliações (atividades OU provas) E créditos > 0
     const disciplinasComNota = disciplinasComNotas.filter(d => {
+      // Garantir que arrays existam
+      const atividades = d.atividades || [];
+      const provas = d.provas || [];
+      
       const temAvaliacao = d.modalidade === 'pontos' 
-        ? d.atividades.length > 0 
-        : d.provas.length > 0;
+        ? atividades.length > 0 
+        : provas.length > 0;
       return temAvaliacao && d.creditos > 0;
     });
     

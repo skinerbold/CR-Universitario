@@ -249,9 +249,9 @@ const DisciplinasMediasList = ({
                     </div>
                     <div className="flex flex-wrap gap-2 sm:gap-4 text-sm text-gray-600 mt-1">
                       <span>Créditos: <strong>{disciplina.creditos}</strong></span>
-                      <span>Provas: <strong>{disciplina.provas.length}/{disciplina.totalAvaliacoes}</strong></span>
+                      <span>Provas: <strong>{(disciplina.provas || []).length}/{disciplina.totalAvaliacoes}</strong></span>
                       <span>Progresso: <strong>{progresso.toFixed(0)}%</strong></span>
-                      {disciplina.provas.length > 0 && (
+                      {(disciplina.provas || []).length > 0 && (
                         <>
                           {(() => {
                             const faltasAtuais = disciplina.faltas || 0;
@@ -311,7 +311,7 @@ const DisciplinasMediasList = ({
                     </div>
                   )}
 
-                  {!podeAdicionar && disciplina.provas.length < (disciplina.totalAvaliacoes || 0) && (
+                  {!podeAdicionar && (disciplina.provas || []).length < (disciplina.totalAvaliacoes || 0) && (
                     <div className="mb-3 text-sm text-gray-500">
                       ⚠️ Limite de {disciplina.totalAvaliacoes} avaliações atingido
                     </div>
@@ -411,11 +411,11 @@ const DisciplinasMediasList = ({
                   )}
 
                   {/* Lista de provas */}
-                  {disciplina.provas.length > 0 && (
+                  {(disciplina.provas || []).length > 0 && (
                     <div className="mb-3">
                       <h4 className="text-sm font-medium text-gray-700 mb-2">Provas Realizadas:</h4>
                       <div className="space-y-1">
-                        {disciplina.provas.map((prova, index) => (
+                        {(disciplina.provas || []).map((prova, index) => (
                           <div key={prova.id} className="text-sm text-gray-600 bg-white p-3 rounded border">
                             {editandoProva?.disciplinaId === disciplina.id && editandoProva?.provaId === prova.id ? (
                               // Modo edição

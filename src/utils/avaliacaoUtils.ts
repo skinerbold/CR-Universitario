@@ -29,20 +29,21 @@ export const calcularNotaFinalDisciplina = (disciplina: DisciplinaParcial): numb
  * Considera provas não cadastradas como nota 0 e calcula a média progressivamente
  */
 export const calcularNotaPorMedias = (disciplina: DisciplinaParcial): number => {
-  if (!disciplina.provas || disciplina.provas.length === 0) {
+  const provas = disciplina.provas || [];
+  if (provas.length === 0) {
     return 0;
   }
 
   const totalAvaliacoes = disciplina.totalAvaliacoes || 4; // padrão 4 avaliações
   
   // Calcula a soma das notas das provas já cadastradas
-  const somaNotasRealizadas = disciplina.provas.reduce((sum, prova) => 
+  const somaNotasRealizadas = provas.reduce((sum, prova) => 
     sum + (prova.nota * prova.peso), 0);
-  const somaPesosRealizados = disciplina.provas.reduce((sum, prova) => 
+  const somaPesosRealizados = provas.reduce((sum, prova) => 
     sum + prova.peso, 0);
 
   // Para provas não realizadas, considera peso padrão = 1 e nota = 0
-  const provasNaoRealizadas = totalAvaliacoes - disciplina.provas.length;
+  const provasNaoRealizadas = totalAvaliacoes - provas.length;
   const pesoProvasNaoRealizadas = provasNaoRealizadas * 1; // peso padrão = 1
   const notaProvasNaoRealizadas = 0; // nota 0 para provas não realizadas
 
@@ -57,11 +58,12 @@ export const calcularNotaPorMedias = (disciplina: DisciplinaParcial): number => 
  * Calcula nota no sistema de pontos (atividades) - mantém lógica atual
  */
 export const calcularNotaPorPontos = (disciplina: DisciplinaParcial): number => {
-  if (!disciplina.atividades || disciplina.atividades.length === 0) {
+  const atividades = disciplina.atividades || [];
+  if (atividades.length === 0) {
     return 0;
   }
 
-  const totalObtido = disciplina.atividades.reduce((sum, atividade) => 
+  const totalObtido = atividades.reduce((sum, atividade) => 
     sum + atividade.notaObtida, 0);
   
   return totalObtido;
@@ -75,7 +77,8 @@ export const calcularProgressoDisciplina = (disciplina: DisciplinaParcial): numb
     if (!disciplina.totalAvaliacoes || disciplina.totalAvaliacoes === 0) {
       return 0;
     }
-    return (disciplina.provas.length / disciplina.totalAvaliacoes) * 100;
+    const provas = disciplina.provas || [];
+    return (provas.length / disciplina.totalAvaliacoes) * 100;
   } else {
     const pontosConsumidos = disciplina.pontosConsumidos || 0;
     return pontosConsumidos;
@@ -87,7 +90,8 @@ export const calcularProgressoDisciplina = (disciplina: DisciplinaParcial): numb
  */
 export const calcularRestanteDisciplina = (disciplina: DisciplinaParcial): string => {
   if (disciplina.modalidade === 'medias') {
-    const restantes = (disciplina.totalAvaliacoes || 0) - disciplina.provas.length;
+    const provas = disciplina.provas || [];
+    const restantes = (disciplina.totalAvaliacoes || 0) - provas.length;
     return restantes > 0 ? `${restantes} avaliação(ões) restante(s)` : 'Todas as avaliações realizadas';
   } else {
     const pontosRestantes = 100 - (disciplina.pontosConsumidos || 0);
@@ -101,7 +105,8 @@ export const calcularRestanteDisciplina = (disciplina: DisciplinaParcial): strin
 export const podeAdicionarProva = (disciplina: DisciplinaParcial): boolean => {
   if (disciplina.modalidade !== 'medias') return false;
   if (!disciplina.totalAvaliacoes) return false;
-  return disciplina.provas.length < disciplina.totalAvaliacoes;
+  const provas = disciplina.provas || [];
+  return provas.length < disciplina.totalAvaliacoes;
 };
 
 /**
