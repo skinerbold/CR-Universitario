@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { DisciplinaParcial, Atividade } from '@/types';
-import { Trash2, Plus, BookOpen, Edit, X, Check } from 'lucide-react';
+import { Trash2, Plus, BookOpen, Edit, X, Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -29,7 +29,9 @@ const DisciplinasParciaisList = ({
   onAdicionarAulaDupla,
   onRemoverFalta,
   onDefinirFaltas
-}: DisciplinasParciaisListProps) => {const [expandedDisciplina, setExpandedDisciplina] = useState<string | null>(null);
+}: DisciplinasParciaisListProps) => {
+  const [expandedDisciplina, setExpandedDisciplina] = useState<string | null>(null);
+  const [minimizedDisciplinas, setMinimizedDisciplinas] = useState<Set<string>>(new Set());
   const [nomeAtividade, setNomeAtividade] = useState('');
   const [notaObtida, setNotaObtida] = useState('');
   const [notaTotal, setNotaTotal] = useState('');
@@ -37,6 +39,18 @@ const DisciplinasParciaisList = ({
   const [nomeAtividadeEdicao, setNomeAtividadeEdicao] = useState('');
   const [notaObtidaEdicao, setNotaObtidaEdicao] = useState('');
   const [notaTotalEdicao, setNotaTotalEdicao] = useState('');
+
+  const toggleMinimized = (disciplinaId: string) => {
+    setMinimizedDisciplinas(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(disciplinaId)) {
+        newSet.delete(disciplinaId);
+      } else {
+        newSet.add(disciplinaId);
+      }
+      return newSet;
+    });
+  };
   const handleAddAtividade = (disciplinaId: string) => {
     if (!notaObtida || !notaTotal) {
       alert('Por favor, preencha nota obtida e nota total');
@@ -154,60 +168,83 @@ const DisciplinasParciaisList = ({
           <div
             key={disciplina.id}
             className="border border-gray-200 rounded-lg p-4 bg-gray-50"
-          >            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 gap-3">
-              <div className="flex-1">
-                <h3 className="font-medium text-gray-800">{disciplina.nome}</h3>
-                <div className="flex flex-wrap gap-2 sm:gap-4 text-sm text-gray-600 mt-1">
-                  <span>Créditos: <strong>{disciplina.creditos}</strong></span>                  <span>Atividades: <strong>{disciplina.atividades.length}</strong></span>
-                  {disciplina.atividades.length > 0 && (
-                    <>
-                      {(() => {
-                        const faltasAtuais = disciplina.faltas || 0;
-                        const reprovadoPorFaltas = estaReprovadoPorFaltas(disciplina.creditos, faltasAtuais);
-                        const notaExibida = reprovadoPorFaltas ? 0 : disciplina.notaParcial;
-                        
-                        return (
-                          <span className="break-all">
-                            Pontos Obtidos: <strong className={`${
-                              reprovadoPorFaltas ? 'text-red-600' :
-                              notaExibida >= 70 ? 'text-green-600' : 
-                              notaExibida >= 60 ? 'text-yellow-600' : 'text-red-600'
-                            }`}>
-                              {notaExibida.toFixed(1)}
-                              {reprovadoPorFaltas && <span className="text-xs ml-1">(Nota zerada por faltas)</span>}
-                            </strong>
-                          </span>
-                        );
-                      })()}
-                      <span className="text-xs text-gray-500 break-all">
-                        (Restam {(100 - (disciplina.pontosConsumidos || 0)).toFixed(1)} pts disponíveis)
-                      </span>
-                    </>
-                  )}
+          >            <div className="flex items-center justify-between mb-3">
+              <div className="flex-1 flex items-center gap-3">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-medium text-gray-800">{disciplina.nome}</h3>
+                    <Button
+                      onClick={() => onRemoveDisciplina(disciplina.id)}
+                      variant="ghost"
+                      size="sm"
+                      className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 h-auto"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <div className="flex flex-wrap gap-2 sm:gap-4 text-sm text-gray-600 mt-1">
+                    <span>Créditos: <strong>{disciplina.creditos}</strong></span>
+                    <span>Atividades: <strong>{disciplina.atividades.length}</strong></span>
+                    {disciplina.atividades.length > 0 && (
+                      <>
+                        {(() => {
+                          const faltasAtuais = disciplina.faltas || 0;
+                          const reprovadoPorFaltas = estaReprovadoPorFaltas(disciplina.creditos, faltasAtuais);
+                          const notaExibida = reprovadoPorFaltas ? 0 : disciplina.notaParcial;
+                          
+                          return (
+                            <span className="break-all">
+                              Pontos Obtidos: <strong className={`${
+                                reprovadoPorFaltas ? 'text-red-600' :
+                                notaExibida >= 70 ? 'text-green-600' : 
+                                notaExibida >= 60 ? 'text-yellow-600' : 'text-red-600'
+                              }`}>
+                                {notaExibida.toFixed(1)}
+                                {reprovadoPorFaltas && <span className="text-xs ml-1">(Nota zerada por faltas)</span>}
+                              </strong>
+                            </span>
+                          );
+                        })()}
+                        <span className="text-xs text-gray-500 break-all">
+                          (Restam {(100 - (disciplina.pontosConsumidos || 0)).toFixed(1)} pts disponíveis)
+                        </span>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
               
-              <div className="flex flex-col sm:flex-row gap-2 min-w-fit">
-                <Button
-                  onClick={() => setExpandedDisciplina(
-                    expandedDisciplina === disciplina.id ? null : disciplina.id
-                  )}
-                  variant="outline"
-                  size="sm"
-                  className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                >
-                  <Plus className="w-4 h-4 mr-1" />
-                  Adicionar Atividade
-                </Button>
-                <Button
-                  onClick={() => onRemoveDisciplina(disciplina.id)}
-                  variant="outline"
-                  size="sm"
-                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>            </div>
+              <Button
+                onClick={() => toggleMinimized(disciplina.id)}
+                variant="ghost"
+                size="sm"
+                className="text-gray-500 hover:text-gray-700"
+              >
+                {minimizedDisciplinas.has(disciplina.id) ? (
+                  <ChevronDown className="w-4 h-4" />
+                ) : (
+                  <ChevronUp className="w-4 h-4" />
+                )}
+              </Button>
+            </div>
+
+            {/* Conteúdo minimizável */}
+            {!minimizedDisciplinas.has(disciplina.id) && (
+              <>
+                {/* Botão para adicionar atividade */}
+                <div className="mb-3">
+                  <Button
+                    onClick={() => setExpandedDisciplina(
+                      expandedDisciplina === disciplina.id ? null : disciplina.id
+                    )}
+                    variant="outline"
+                    size="sm"
+                    className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                  >
+                    <Plus className="w-4 h-4 mr-1" />
+                    Adicionar Atividade
+                  </Button>
+                </div>
 
             {/* Formulário para adicionar atividade - Aparece logo abaixo do botão */}
             {expandedDisciplina === disciplina.id && (
@@ -389,7 +426,10 @@ const DisciplinasParciaisList = ({
               onAdicionarFalta={onAdicionarFalta}
               onAdicionarAulaDupla={onAdicionarAulaDupla}
               onRemoverFalta={onRemoverFalta}
-              onDefinirFaltas={onDefinirFaltas}            />
+              onDefinirFaltas={onDefinirFaltas}
+            />
+              </>
+            )}
           </div>
         ))}
       </div>

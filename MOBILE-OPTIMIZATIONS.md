@@ -330,3 +330,26 @@ export interface Atividade {
 - ✅ **Otimizado para toque** com dedos
 - ✅ **Menos espaço vertical** utilizado
 - ✅ **Experiência consistente** por dispositivo
+
+## 🗂️ **NOVA FUNCIONALIDADE: SISTEMA DE MINIMIZAÇÃO E REDESIGN DO BOTÃO REMOVER**
+
+### 🎯 **O que foi implementado:**
+
+#### 🗑️ **Novo Design do Botão Remover Disciplina**
+- **Posição**: Movido para junto do nome da disciplina
+- **Estilo**: Ícone de lixeira (Trash2) compacto
+- **Layout**: Alinhado à direita do nome da disciplina
+- **Cores**: Vermelho suave com hover mais intenso
+- **Tamanho**: Compacto (w-4 h-4) para não interferir na leitura
+
+#### 📁 **Sistema de Minimização de Detalhes**
+- **Controle**: Botão chevron (▼/▲) no canto direito superior
+- **Conteúdo minimizável**: 
+  - Botão "Adicionar Atividade"
+  - Formulário de nova atividade
+  - Lista de atividades existentes
+  - Controle de faltas
+- **Estado persistente**: Cada disciplina mantém seu estado individual
+- **Visual**: Transição suave entre expandido/minimizado
+
+### 🔧 **Implementação Técnica:**

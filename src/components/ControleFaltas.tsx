@@ -190,32 +190,35 @@ const ControleFaltas = ({
               </Button>
             </div>
           </div>        ) : (
-          <div className="space-y-2">
-            {/* Layout para Mobile - botões lado a lado */}
+          <div className="space-y-2">            {/* Layout para Mobile - botões lado a lado */}
             {isMobile ? (
-              <div className="flex gap-2">
+              <div className="flex gap-2 w-full">
                 <Button
                   onClick={handleFalteiHoje}
-                  className={`flex-1 ${
+                  size="sm"
+                  className={`flex-1 min-w-0 ${
                     risco.status === 'reprovado' 
                       ? 'bg-red-600 hover:bg-red-700' 
                       : risco.status === 'critico'
                       ? 'bg-orange-600 hover:bg-orange-700'
                       : 'bg-blue-600 hover:bg-blue-700'
-                  } text-white`}
+                  } text-white text-xs px-2`}
                   disabled={risco.status === 'reprovado'}
                 >
-                  <Calendar className="w-4 h-4 mr-2" />
-                  {risco.status === 'reprovado' ? 'Reprovado' : 'Faltei Hoje'}
+                  <Calendar className="w-3 h-3 mr-1" />
+                  <span className="truncate">
+                    {risco.status === 'reprovado' ? 'Reprovado' : 'Faltei'}
+                  </span>
                 </Button>
                 
                 <Button
                   onClick={() => onRemoverFalta(disciplina.id)}
                   disabled={faltasAtuais === 0}
-                  className="flex-1 bg-red-600 hover:bg-red-700 text-white disabled:bg-gray-300 disabled:text-gray-500"
+                  size="sm"
+                  className="flex-1 min-w-0 bg-red-600 hover:bg-red-700 text-white disabled:bg-gray-300 disabled:text-gray-500 text-xs px-2"
                 >
-                  <Minus className="w-4 h-4 mr-2" />
-                  Remover
+                  <Minus className="w-3 h-3 mr-1" />
+                  <span className="truncate">Remover</span>
                 </Button>
               </div>
             ) : (
