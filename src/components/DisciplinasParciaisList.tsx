@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { DisciplinaParcial, Atividade } from '@/types';
-import { Trash2, Plus, BookOpen, Edit, X, Check, ChevronDown, ChevronUp } from 'lucide-react';
+import { DisciplinaParcial, Atividade, Prova } from '@/types';
+import { Trash2, Plus, BookOpen, Edit, X, Check, ChevronDown, ChevronUp, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import ControleFaltas from './ControleFaltas';
 import { estaReprovadoPorFaltas } from '@/utils/faltasUtils';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { calcularNotaPorMedias, calcularProgressoDisciplina, podeAdicionarProva } from '@/utils/avaliacaoUtils';
 
 interface DisciplinasParciaisListProps {
   disciplinas: DisciplinaParcial[];
@@ -14,6 +15,9 @@ interface DisciplinasParciaisListProps {
   onAddAtividade: (disciplinaId: string, atividade: Omit<Atividade, 'id'>) => void;
   onEditAtividade: (disciplinaId: string, atividadeId: string, dadosAtualizados: Omit<Atividade, 'id'>) => void;
   onRemoveAtividade: (disciplinaId: string, atividadeId: string) => void;
+  onAddProva: (disciplinaId: string, prova: Omit<Prova, 'id'>) => void;
+  onEditProva: (disciplinaId: string, provaId: string, dadosAtualizados: Omit<Prova, 'id'>) => void;
+  onRemoveProva: (disciplinaId: string, provaId: string) => void;
   onAdicionarFalta: (disciplinaId: string) => void;
   onAdicionarAulaDupla: (disciplinaId: string) => void;
   onRemoverFalta: (disciplinaId: string) => void;
@@ -26,6 +30,9 @@ const DisciplinasParciaisList = ({
   onAddAtividade,
   onEditAtividade,
   onRemoveAtividade,
+  onAddProva,
+  onEditProva,
+  onRemoveProva,
   onAdicionarFalta,
   onAdicionarAulaDupla,
   onRemoverFalta,
@@ -40,6 +47,14 @@ const DisciplinasParciaisList = ({
   const [nomeAtividadeEdicao, setNomeAtividadeEdicao] = useState('');
   const [notaObtidaEdicao, setNotaObtidaEdicao] = useState('');
   const [notaTotalEdicao, setNotaTotalEdicao] = useState('');
+  // Estados para provas (sistema de médias)
+  const [nomeProva, setNomeProva] = useState('');
+  const [notaProva, setNotaProva] = useState('');
+  const [pesoProva, setPesoProva] = useState('1');
+  const [editandoProva, setEditandoProva] = useState<{disciplinaId: string, provaId: string} | null>(null);
+  const [nomeProvaEdicao, setNomeProvaEdicao] = useState('');
+  const [notaProvaEdicao, setNotaProvaEdicao] = useState('');
+  const [pesoProvaEdicao, setPesoProvaEdicao] = useState('');
   const [boxPulsando, setBoxPulsando] = useState<string | null>(null);
   const isMobile = useIsMobile();
 
@@ -161,6 +176,96 @@ const DisciplinasParciaisList = ({
     }
   };
 
+  // Funções para provas (sistema de médias)
+  const handleAddProva = (disciplinaId: string) => {
+    if (!nomeProva.trim() || !notaProva) {
+      alert('Por favor, preencha todos os campos');
+      return;
+    }
+
+    const notaNum = parseFloat(notaProva);
+    const pesoNum = parseFloat(pesoProva);
+
+    if (notaNum < 0 || notaNum > 100) {
+      alert('A nota deve estar entre 0 e 100');
+      return;
+    }
+
+    if (pesoNum <= 0) {
+      alert('O peso deve ser maior que 0');
+      return;
+    }
+
+    const disciplina = disciplinas.find(d => d.id === disciplinaId);
+    if (disciplina && !podeAdicionarProva(disciplina)) {
+      alert(`Não é possível adicionar mais provas. Limite: ${disciplina.totalAvaliacoes || 4} provas.`);
+      return;
+    }
+
+    onAddProva!(disciplinaId, {
+      nome: nomeProva.trim(),
+      nota: notaNum,
+      peso: pesoNum
+    });
+
+    setBoxPulsando(disciplinaId);
+    setTimeout(() => {
+      setBoxPulsando(null);
+    }, 1500);
+
+    setNomeProva('');
+    setNotaProva('');
+    setPesoProva('1');
+  };
+
+  const iniciarEdicaoProva = (disciplinaId: string, provaId: string, prova: any) => {
+    setEditandoProva({ disciplinaId, provaId });
+    setNomeProvaEdicao(prova.nome);
+    setNotaProvaEdicao(prova.nota.toString());
+    setPesoProvaEdicao(prova.peso.toString());
+  };
+
+  const cancelarEdicaoProva = () => {
+    setEditandoProva(null);
+    setNomeProvaEdicao('');
+    setNotaProvaEdicao('');
+    setPesoProvaEdicao('');
+  };
+
+  const salvarEdicaoProva = () => {
+    if (!editandoProva || !nomeProvaEdicao.trim() || !notaProvaEdicao || !pesoProvaEdicao) {
+      alert('Por favor, preencha todos os campos');
+      return;
+    }
+
+    const notaNum = parseFloat(notaProvaEdicao);
+    const pesoNum = parseFloat(pesoProvaEdicao);
+
+    if (notaNum < 0 || notaNum > 100) {
+      alert('A nota deve estar entre 0 e 100');
+      return;
+    }
+
+    if (pesoNum <= 0) {
+      alert('O peso deve ser maior que 0');
+      return;
+    }
+
+    onEditProva!(editandoProva.disciplinaId, editandoProva.provaId, {
+      nome: nomeProvaEdicao.trim(),
+      nota: notaNum,
+      peso: pesoNum
+    });
+
+    cancelarEdicaoProva();
+  };
+
+  const removerProva = (disciplinaId: string, provaId: string) => {
+    if (confirm('Tem certeza que deseja remover esta prova?')) {
+      onRemoveProva!(disciplinaId, provaId);
+    }
+  };
+
   if (disciplinas.length === 0) {
     return (
       <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
@@ -208,30 +313,68 @@ const DisciplinasParciaisList = ({
                   </div>
                   <div className="flex flex-wrap gap-2 sm:gap-4 text-sm text-gray-600 mt-1">
                     <span>Créditos: <strong>{disciplina.creditos}</strong></span>
-                    <span>Atividades: <strong>{disciplina.atividades.length}</strong></span>
-                    {disciplina.atividades.length > 0 && (
+                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                      {disciplina.modalidade === 'medias' ? 'Sistema de Médias' : 'Sistema de Pontos'}
+                    </span>
+                    
+                    {disciplina.modalidade === 'pontos' ? (
                       <>
-                        {(() => {
-                          const faltasAtuais = disciplina.faltas || 0;
-                          const reprovadoPorFaltas = estaReprovadoPorFaltas(disciplina.creditos, faltasAtuais);
-                          const notaExibida = reprovadoPorFaltas ? 0 : disciplina.notaParcial;
-                          
-                          return (
-                            <span className="break-all">
-                              Pontos Obtidos: <strong className={`${
-                                reprovadoPorFaltas ? 'text-red-600' :
-                                notaExibida >= 70 ? 'text-green-600' : 
-                                notaExibida >= 60 ? 'text-yellow-600' : 'text-red-600'
-                              }`}>
-                                {notaExibida.toFixed(1)}
-                                {reprovadoPorFaltas && <span className="text-xs ml-1">(Nota zerada por faltas)</span>}
-                              </strong>
+                        <span>Atividades: <strong>{disciplina.atividades.length}</strong></span>
+                        {disciplina.atividades.length > 0 && (
+                          <>
+                            {(() => {
+                              const faltasAtuais = disciplina.faltas || 0;
+                              const reprovadoPorFaltas = estaReprovadoPorFaltas(disciplina.creditos, faltasAtuais);
+                              const notaExibida = reprovadoPorFaltas ? 0 : disciplina.notaParcial;
+                              
+                              return (
+                                <span className="break-all">
+                                  Pontos Obtidos: <strong className={`${
+                                    reprovadoPorFaltas ? 'text-red-600' :
+                                    notaExibida >= 70 ? 'text-green-600' : 
+                                    notaExibida >= 60 ? 'text-yellow-600' : 'text-red-600'
+                                  }`}>
+                                    {notaExibida.toFixed(1)}
+                                    {reprovadoPorFaltas && <span className="text-xs ml-1">(Nota zerada por faltas)</span>}
+                                  </strong>
+                                </span>
+                              );
+                            })()}
+                            <span className="text-xs text-gray-500 break-all">
+                              (Restam {(100 - (disciplina.pontosConsumidos || 0)).toFixed(1)} pts disponíveis)
                             </span>
-                          );
-                        })()}
-                        <span className="text-xs text-gray-500 break-all">
-                          (Restam {(100 - (disciplina.pontosConsumidos || 0)).toFixed(1)} pts disponíveis)
-                        </span>
+                          </>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <span>Provas: <strong>{disciplina.provas.length}</strong></span>
+                        {disciplina.provas.length > 0 && (
+                          <>
+                            {(() => {
+                              const faltasAtuais = disciplina.faltas || 0;
+                              const reprovadoPorFaltas = estaReprovadoPorFaltas(disciplina.creditos, faltasAtuais);
+                              const notaExibida = reprovadoPorFaltas ? 0 : disciplina.notaParcial;
+                              const progresso = calcularProgressoDisciplina(disciplina);
+                              
+                              return (
+                                <span className="break-all">
+                                  Média Atual: <strong className={`${
+                                    reprovadoPorFaltas ? 'text-red-600' :
+                                    notaExibida >= 70 ? 'text-green-600' : 
+                                    notaExibida >= 60 ? 'text-yellow-600' : 'text-red-600'
+                                  }`}>
+                                    {notaExibida.toFixed(1)}
+                                    {reprovadoPorFaltas && <span className="text-xs ml-1">(Nota zerada por faltas)</span>}
+                                  </strong>
+                                </span>
+                              );
+                            })()}
+                            <span className="text-xs text-gray-500">
+                              ({disciplina.provas.length}/{disciplina.totalAvaliacoes || 4} avaliações)
+                            </span>
+                          </>
+                        )}
                       </>
                     )}
                   </div>
@@ -270,7 +413,7 @@ const DisciplinasParciaisList = ({
                   </Button>
                 </div>
 
-            {/* Formulário para adicionar atividade - Aparece logo abaixo do botão */}
+            {/* Formulário para adicionar atividade/prova - Aparece logo abaixo do botão */}
             {expandedDisciplina === disciplina.id && (
               <div className={`bg-blue-50 p-4 rounded-lg border-2 border-blue-200 mb-4 transition-all duration-300 ${
                 boxPulsando === disciplina.id 
@@ -283,79 +426,156 @@ const DisciplinasParciaisList = ({
                 animationTimingFunction: 'ease-in-out',
                 animationFillMode: 'both'
               } : {}}>
-                <h4 className="text-sm font-medium text-blue-800 mb-3 flex items-center gap-2">
-                  <Plus className="w-4 h-4" />
-                  Nova Atividade para {disciplina.nome}
-                </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div>
-                    <Label htmlFor="nome-atividade" className="text-sm font-medium text-gray-700">
-                      Nome da Atividade{isMobile ? ' (opcional)' : ''}
-                    </Label>
-                    <Input
-                      id="nome-atividade"
-                      type="text"
-                      value={nomeAtividade}
-                      onChange={(e) => setNomeAtividade(e.target.value)}
-                      placeholder="Ex: Prova 1, Trabalho..."
-                      className="mt-1"
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="nota-obtida" className="text-sm font-medium text-gray-700">
-                      Pontos Obtidos
-                    </Label>
-                    <Input
-                      id="nota-obtida"
-                      type="number"
-                      min="0"
-                      step="0.1"
-                      value={notaObtida}
-                      onChange={(e) => setNotaObtida(e.target.value)}
-                      placeholder="20"
-                      className="mt-1"
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="nota-total" className="text-sm font-medium text-gray-700">
-                      Pontos Totais da Atividade
-                    </Label>
-                    <Input
-                      id="nota-total"
-                      type="number"
-                      min="0.1"
-                      step="0.1"
-                      value={notaTotal}
-                      onChange={(e) => setNotaTotal(e.target.value)}
-                      placeholder="25"
-                      className="mt-1"
-                    />
-                  </div>
-                  
-                  <div className="flex items-end gap-2">
-                    <Button
-                      onClick={() => handleAddAtividade(disciplina.id)}
-                      className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Adicionar
-                    </Button>
-                    <Button
-                      onClick={() => setExpandedDisciplina(null)}
-                      variant="outline"
-                      className="text-gray-600"
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
+                
+                {disciplina.modalidade === 'pontos' ? (
+                  <>
+                    <h4 className="text-sm font-medium text-blue-800 mb-3 flex items-center gap-2">
+                      <Plus className="w-4 h-4" />
+                      Nova Atividade para {disciplina.nome}
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <div>
+                        <Label htmlFor="nome-atividade" className="text-sm font-medium text-gray-700">
+                          Nome da Atividade{isMobile ? ' (opcional)' : ''}
+                        </Label>
+                        <Input
+                          id="nome-atividade"
+                          type="text"
+                          value={nomeAtividade}
+                          onChange={(e) => setNomeAtividade(e.target.value)}
+                          placeholder="Ex: Prova 1, Trabalho..."
+                          className="mt-1"
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="nota-obtida" className="text-sm font-medium text-gray-700">
+                          Pontos Obtidos
+                        </Label>
+                        <Input
+                          id="nota-obtida"
+                          type="number"
+                          min="0"
+                          step="0.1"
+                          value={notaObtida}
+                          onChange={(e) => setNotaObtida(e.target.value)}
+                          placeholder="20"
+                          className="mt-1"
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="nota-total" className="text-sm font-medium text-gray-700">
+                          Pontos Totais da Atividade
+                        </Label>
+                        <Input
+                          id="nota-total"
+                          type="number"
+                          min="0.1"
+                          step="0.1"
+                          value={notaTotal}
+                          onChange={(e) => setNotaTotal(e.target.value)}
+                          placeholder="25"
+                          className="mt-1"
+                        />
+                      </div>
+                      
+                      <div className="flex items-end gap-2">
+                        <Button
+                          onClick={() => handleAddAtividade(disciplina.id)}
+                          className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Adicionar
+                        </Button>
+                        <Button
+                          onClick={() => setExpandedDisciplina(null)}
+                          variant="outline"
+                          className="text-gray-600"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <h4 className="text-sm font-medium text-blue-800 mb-3 flex items-center gap-2">
+                      <TrendingUp className="w-4 h-4" />
+                      Nova Prova para {disciplina.nome}
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <div>
+                        <Label htmlFor="nome-prova" className="text-sm font-medium text-gray-700">
+                          Nome da Prova
+                        </Label>
+                        <Input
+                          id="nome-prova"
+                          type="text"
+                          value={nomeProva}
+                          onChange={(e) => setNomeProva(e.target.value)}
+                          placeholder="Ex: 1ª Prova, Prova Final..."
+                          className="mt-1"
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="nota-prova" className="text-sm font-medium text-gray-700">
+                          Nota Obtida (0-100)
+                        </Label>
+                        <Input
+                          id="nota-prova"
+                          type="number"
+                          min="0"
+                          max="100"
+                          step="0.1"
+                          value={notaProva}
+                          onChange={(e) => setNotaProva(e.target.value)}
+                          placeholder="85.5"
+                          className="mt-1"
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="peso-prova" className="text-sm font-medium text-gray-700">
+                          Peso da Prova
+                        </Label>
+                        <Input
+                          id="peso-prova"
+                          type="number"
+                          min="0.1"
+                          step="0.1"
+                          value={pesoProva}
+                          onChange={(e) => setPesoProva(e.target.value)}
+                          placeholder="1"
+                          className="mt-1"
+                        />
+                      </div>
+                      
+                      <div className="flex items-end gap-2">
+                        <Button
+                          onClick={() => handleAddProva(disciplina.id)}
+                          className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Adicionar
+                        </Button>
+                        <Button
+                          onClick={() => setExpandedDisciplina(null)}
+                          variant="outline"
+                          className="text-gray-600"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             )}
 
-            {/* Lista de atividades */}
-            {disciplina.atividades.length > 0 && (
+            {/* Lista de atividades (sistema de pontos) */}
+            {disciplina.modalidade === 'pontos' && disciplina.atividades.length > 0 && (
               <div className="mb-3">
                 <h4 className="text-sm font-medium text-gray-700 mb-2">Atividades:</h4>                <div className="space-y-1">
                   {disciplina.atividades.map((atividade, index) => (
@@ -454,6 +674,108 @@ const DisciplinasParciaisList = ({
                     </div>
                   ))}
                 </div>              </div>            )}
+
+            {/* Lista de provas (sistema de médias) */}
+            {disciplina.modalidade === 'medias' && disciplina.provas.length > 0 && (
+              <div className="mb-3">
+                <h4 className="text-sm font-medium text-gray-700 mb-2">Provas:</h4>
+                <div className="space-y-1">
+                  {disciplina.provas.map((prova, index) => (
+                    <div key={prova.id} className="text-sm text-gray-600 bg-white p-3 rounded border">
+                      {editandoProva?.disciplinaId === disciplina.id && editandoProva?.provaId === prova.id ? (
+                        // Modo edição
+                        <div className="space-y-3">
+                          <div className="text-xs text-blue-600 font-medium mb-2">Editando {prova.nome}</div>
+                          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                            <div>
+                              <Label className="text-xs text-gray-700">Nome da Prova</Label>
+                              <Input
+                                type="text"
+                                value={nomeProvaEdicao}
+                                onChange={(e) => setNomeProvaEdicao(e.target.value)}
+                                placeholder="Ex: 1ª Prova, Prova Final..."
+                                className="mt-1 text-sm"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-xs text-gray-700">Nota (0-100)</Label>
+                              <Input
+                                type="number"
+                                min="0"
+                                max="100"
+                                step="0.1"
+                                value={notaProvaEdicao}
+                                onChange={(e) => setNotaProvaEdicao(e.target.value)}
+                                className="mt-1 text-sm"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-xs text-gray-700">Peso</Label>
+                              <Input
+                                type="number"
+                                min="0.1"
+                                step="0.1"
+                                value={pesoProvaEdicao}
+                                onChange={(e) => setPesoProvaEdicao(e.target.value)}
+                                className="mt-1 text-sm"
+                              />
+                            </div>
+                            <div className="flex items-end gap-1">
+                              <Button
+                                onClick={salvarEdicaoProva}
+                                variant="default"
+                                size="sm"
+                                className="bg-green-600 hover:bg-green-700 text-white p-1 h-auto"
+                              >
+                                <Check className="w-3 h-3" />
+                              </Button>
+                              <Button
+                                onClick={cancelarEdicaoProva}
+                                variant="outline"
+                                size="sm"
+                                className="text-gray-600 hover:text-gray-700 p-1 h-auto"
+                              >
+                                <X className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        // Modo visualização
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <div className="font-medium text-gray-800">
+                              {prova.nome}: {prova.nota.toFixed(1)} pts
+                            </div>
+                            <div className="text-gray-500 text-xs mt-1">
+                              Peso: {prova.peso} - Contribuição para média: {(prova.nota * prova.peso).toFixed(1)}
+                            </div>
+                          </div>
+                          <div className="flex gap-1 ml-3">
+                            <Button
+                              onClick={() => iniciarEdicaoProva(disciplina.id, prova.id, prova)}
+                              variant="outline"
+                              size="sm"
+                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 p-1"
+                            >
+                              <Edit className="w-3 h-3" />
+                            </Button>
+                            <Button
+                              onClick={() => removerProva(disciplina.id, prova.id)}
+                              variant="outline"
+                              size="sm"
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50 p-1"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Controle de Faltas */}
             <ControleFaltas

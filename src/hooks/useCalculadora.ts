@@ -225,8 +225,14 @@ export const useCalculadora = () => {
   const calcularCRParcial = (disciplinasComNotas: DisciplinaParcial[]) => {
     if (disciplinasComNotas.length === 0) return null;
 
-    // Filtra disciplinas que têm atividades E créditos > 0
-    const disciplinasComNota = disciplinasComNotas.filter(d => d.atividades.length > 0 && d.creditos > 0);
+    // Filtra disciplinas que têm avaliações (atividades OU provas) E créditos > 0
+    const disciplinasComNota = disciplinasComNotas.filter(d => {
+      const temAvaliacao = d.modalidade === 'pontos' 
+        ? d.atividades.length > 0 
+        : d.provas.length > 0;
+      return temAvaliacao && d.creditos > 0;
+    });
+    
     if (disciplinasComNota.length === 0) return null;
 
     const somaNotasCreditos = disciplinasComNota.reduce(

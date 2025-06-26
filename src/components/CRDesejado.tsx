@@ -35,12 +35,12 @@ const CRDesejado = ({ disciplinas, disciplinasParciais, tipoCalculo, crAtual }: 
         pontosDisponiveis: 100 - (d.pontosConsumidos || 0)
       }));
     } else {
-      // Filtra disciplinas com créditos > 0
+      // Para CRA, tratar disciplinas como se todas tivessem 100 pontos disponíveis (igual ao CR Parcial)
       disciplinasParaCalcular = disciplinas.filter(d => d.creditos > 0).map(d => ({
         nome: d.nome,
         creditos: d.creditos,
         notaAtual: d.nota,
-        pontosDisponiveis: undefined
+        pontosDisponiveis: 100 - d.nota // Pontos disponíveis = 100 - nota atual
       }));
     }
 
@@ -49,27 +49,19 @@ const CRDesejado = ({ disciplinas, disciplinasParciais, tipoCalculo, crAtual }: 
     const totalCreditos = disciplinasParaCalcular.reduce((acc, d) => acc + d.creditos, 0);
     const pontosTotaisNecessarios = crDesejadoNum * totalCreditos;
 
-    // Separar disciplinas completas e incompletas
+    // Separar disciplinas completas e incompletas (usando a mesma lógica para ambos os tipos)
     const disciplinasCompletas = disciplinasParaCalcular.filter(d => {
-      if (tipoCalculo === 'parcial') {
-        return d.pontosDisponiveis === 0;
-      } else {
-        return d.notaAtual !== undefined && d.notaAtual !== null;
-      }
+      return d.pontosDisponiveis === 0;
     });
     
     const disciplinasIncompletas = disciplinasParaCalcular.filter(d => {
-      if (tipoCalculo === 'parcial') {
-        return d.pontosDisponiveis === undefined || d.pontosDisponiveis > 0;
-      } else {
-        return d.notaAtual === undefined || d.notaAtual === null;
-      }
+      return d.pontosDisponiveis === undefined || d.pontosDisponiveis > 0;
     });
 
     // Calcular pontos já garantidos
     const pontosCompletas = disciplinasCompletas.reduce((acc, d) => acc + (d.notaAtual! * d.creditos), 0);
     const pontosParciaisIncompletas = disciplinasIncompletas.reduce((acc, d) => {
-      if (tipoCalculo === 'parcial' && d.notaAtual !== undefined) {
+      if (d.notaAtual !== undefined) {
         return acc + (d.notaAtual * d.creditos);
       }
       return acc;
@@ -77,17 +69,12 @@ const CRDesejado = ({ disciplinas, disciplinasParciais, tipoCalculo, crAtual }: 
     
     const pontosJaObtidosTotal = pontosCompletas + pontosParciaisIncompletas;
     const pontosNecessarios = pontosTotaisNecessarios - pontosJaObtidosTotal;
-      // Calcular pontos máximos ainda possíveis
-    let pontosMaximosPossiveis = 0;
-    if (tipoCalculo === 'parcial') {
-      pontosMaximosPossiveis = disciplinasIncompletas.reduce((acc, d) => {
-        const pontosDisponiveis = d.pontosDisponiveis || 0;
-        return acc + (pontosDisponiveis / 100) * d.creditos * 100; // pontos disponíveis já em escala 0-100
-      }, 0);
-    } else {
-      const creditosSemNota = disciplinasIncompletas.reduce((acc, d) => acc + d.creditos, 0);
-      pontosMaximosPossiveis = creditosSemNota * 100;
-    }
+
+    // Calcular pontos máximos ainda possíveis (usar mesma lógica para ambos os tipos)
+    const pontosMaximosPossiveis = disciplinasIncompletas.reduce((acc, d) => {
+      const pontosDisponiveis = d.pontosDisponiveis || 0;
+      return acc + (pontosDisponiveis / 100) * d.creditos * 100;
+    }, 0);
 
     if (disciplinasIncompletas.length === 0) {
       const crAtualCalculado = pontosJaObtidosTotal / totalCreditos;
@@ -104,19 +91,13 @@ const CRDesejado = ({ disciplinas, disciplinasParciais, tipoCalculo, crAtual }: 
 
     let mediaMinimaNecessaria = 0;
     
-    if (tipoCalculo === 'parcial') {
-      // Para CR parcial, calcular baseado nos pontos disponíveis de cada disciplina
-      const pontosDisponiveisTotais = disciplinasIncompletas.reduce((acc, d) => {
-        return acc + (d.pontosDisponiveis || 0);
-      }, 0);
-      
-      if (pontosDisponiveisTotais > 0 && !metaJaAtingida) {
-        mediaMinimaNecessaria = (pontosNecessarios / creditosTotaisIncompletos);
-      }
-    } else {
-      if (creditosTotaisIncompletos > 0 && !metaJaAtingida) {
-        mediaMinimaNecessaria = pontosNecessarios / creditosTotaisIncompletos;
-      }
+    // Usar a mesma lógica para ambos os tipos (baseado nos pontos disponíveis)
+    const pontosDisponiveisTotais = disciplinasIncompletas.reduce((acc, d) => {
+      return acc + (d.pontosDisponiveis || 0);
+    }, 0);
+    
+    if (pontosDisponiveisTotais > 0 && !metaJaAtingida) {
+      mediaMinimaNecessaria = (pontosNecessarios / creditosTotaisIncompletos);
     }
 
     return {
@@ -160,17 +141,12 @@ const CRDesejado = ({ disciplinas, disciplinasParciais, tipoCalculo, crAtual }: 
   const iniciarSimulacao = () => {
     if (!calculos || calculos.tipo === 'completo') return;
     
-    // Inicializar com valores sugeridos
+    // Inicializar com valores sugeridos (usar mesma lógica para ambos os tipos)
     const pontosIniciais: {[key: string]: string} = {};
     calculos.disciplinasIncompletas.forEach((disciplina, index) => {
-      if (tipoCalculo === 'parcial') {
-        // Para CR parcial, sugerir uma porcentagem dos pontos disponíveis
-        const sugestao = Math.min(calculos.mediaMinimaNecessaria, disciplina.pontosDisponiveis || 0);
-        pontosIniciais[index.toString()] = sugestao.toFixed(1);
-      } else {
-        // Para outros tipos, sugerir a média necessária
-        pontosIniciais[index.toString()] = calculos.mediaMinimaNecessaria.toFixed(1);
-      }
+      // Sugerir uma porcentagem dos pontos disponíveis
+      const sugestao = Math.min(calculos.mediaMinimaNecessaria, disciplina.pontosDisponiveis || 0);
+      pontosIniciais[index.toString()] = sugestao.toFixed(1);
     });
     setPontosSimulados(pontosIniciais);
     setSimulacaoAtiva(true);
@@ -199,22 +175,14 @@ const CRDesejado = ({ disciplinas, disciplinasParciais, tipoCalculo, crAtual }: 
       const pontoStr = pontosSimulados[index.toString()] || '0';
       const pontos = parseFloat(pontoStr) || 0;
 
-      if (tipoCalculo === 'parcial') {
-        const pontosDisponiveis = disciplina.pontosDisponiveis || 0;
-        if (pontos > pontosDisponiveis) {
-          temErro = true;
-          erros.push(`${disciplina.nome}: máximo ${pontosDisponiveis.toFixed(1)} pontos disponíveis`);
-        }
-        pontosAdicionais += (pontos / 100) * disciplina.creditos * 100;
-        pontosMaximosAdicionais += (pontosDisponiveis / 100) * disciplina.creditos * 100;
-      } else {
-        if (pontos > 100) {
-          temErro = true;
-          erros.push(`${disciplina.nome}: máximo 100 pontos`);
-        }
-        pontosAdicionais += pontos * disciplina.creditos;
-        pontosMaximosAdicionais += 100 * disciplina.creditos;
+      // Usar mesma lógica para ambos os tipos
+      const pontosDisponiveis = disciplina.pontosDisponiveis || 0;
+      if (pontos > pontosDisponiveis) {
+        temErro = true;
+        erros.push(`${disciplina.nome}: máximo ${pontosDisponiveis.toFixed(1)} pontos disponíveis`);
       }
+      pontosAdicionais += (pontos / 100) * disciplina.creditos * 100;
+      pontosMaximosAdicionais += (pontosDisponiveis / 100) * disciplina.creditos * 100;
     });
 
     const novospontosTotal = calculos.pontosJaObtidos + pontosAdicionais;
@@ -222,19 +190,13 @@ const CRDesejado = ({ disciplinas, disciplinasParciais, tipoCalculo, crAtual }: 
     const atingiuMeta = crSimulado >= calculos.crDesejado;
     const diferenciaPontosBruta = calculos.pontosNecessarios - pontosAdicionais;
 
-    // Calcular diferença em formato amigável (igual à análise principal)
+    // Calcular diferença em formato amigável (usar mesma lógica para ambos)
     let diferencaFormatada = '';
     let diferencaPorCredito = 0;
-    let diferencaPorDisciplina = 0;
 
     if (diferenciaPontosBruta > 0) { // Ainda falta pontos
-      if (tipoCalculo === 'parcial') {
-        diferencaPorCredito = diferenciaPontosBruta / calculos.creditosSemNota;
-        diferencaFormatada = `${diferencaPorCredito.toFixed(1)} pontos por crédito restante`;
-      } else {
-        diferencaPorDisciplina = diferenciaPontosBruta / calculos.disciplinasIncompletas.length;
-        diferencaFormatada = `${diferencaPorDisciplina.toFixed(1)} pontos por disciplina`;
-      }
+      diferencaPorCredito = diferenciaPontosBruta / calculos.creditosSemNota;
+      diferencaFormatada = `${diferencaPorCredito.toFixed(1)} pontos por crédito restante`;
     }
 
     return {
@@ -245,11 +207,10 @@ const CRDesejado = ({ disciplinas, disciplinasParciais, tipoCalculo, crAtual }: 
       diferenca: diferenciaPontosBruta,
       diferencaFormatada,
       diferencaPorCredito,
-      diferencaPorDisciplina,
       temErro,
       erros
     };
-  }, [simulacaoAtiva, pontosSimulados, calculos, tipoCalculo]);
+  }, [simulacaoAtiva, pontosSimulados, calculos]);
 
   const temDisciplinas = tipoCalculo === 'parcial' 
     ? disciplinasParciais.length > 0 
@@ -345,87 +306,56 @@ const CRDesejado = ({ disciplinas, disciplinasParciais, tipoCalculo, crAtual }: 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                   <div className="space-y-2 text-sm">
                     <p><strong>Pontos já obtidos:</strong> {calculos.pontosJaObtidos.toFixed(2)}</p>
-                    {calculos.tipoCalculo === 'parcial' ? (
-                      <>
-                        <p><strong>Média necessária nas atividades restantes:</strong> {calculos.mediaMinimaNecessaria.toFixed(2)} pontos por crédito</p>
-                        <p className="text-xs text-gray-600">
-                          Para cada crédito de disciplina incompleta, você precisa obter {calculos.mediaMinimaNecessaria.toFixed(2)} pontos nas próximas atividades
-                        </p>
-                      </>
-                    ) : (
-                      <>
-                        <p><strong>Nota necessária por disciplina restante:</strong> {calculos.mediaMinimaNecessaria.toFixed(2)} pontos</p>
-                        <p className="text-xs text-gray-600">
-                          Cada uma das {calculos.creditosSemNota / calculos.disciplinasIncompletas.length > 0 ? calculos.disciplinasIncompletas.length : 1} disciplinas restantes precisa de pelo menos {calculos.mediaMinimaNecessaria.toFixed(2)} pontos
-                        </p>
-                      </>
-                    )}
+                    <p><strong>Pontos necessários nas atividades restantes:</strong> {calculos.mediaMinimaNecessaria.toFixed(2)} pontos por crédito</p>
+                    <p className="text-xs text-gray-600">
+                      Para cada crédito de disciplina incompleta, você precisa obter {calculos.mediaMinimaNecessaria.toFixed(2)} pontos
+                    </p>
                   </div>
                     <div className="space-y-2 text-sm">
-                    {calculos.metaJaAtingida ? (
-                      <div className="p-3 bg-blue-100 border border-blue-300 rounded">
-                        <p className="text-blue-800 font-medium">
-                          🎯 Meta já atingida!
-                        </p>
-                        <p className="text-blue-700">
-                          <strong>Parabéns! Você já alcançou o {tipoCalculo === 'curso' ? 'CRA' : 'CR'} desejado de {calculos.crDesejado.toFixed(2)}.</strong>
-                          {calculos.tipoCalculo === 'parcial' && (
+                    {calculos.metaJaAtingida ? (                        <div className="p-3 bg-blue-100 border border-blue-300 rounded">
+                          <p className="text-blue-800 font-medium">
+                            🎯 Meta já atingida!
+                          </p>
+                          <p className="text-blue-700">
+                            <strong>Parabéns! Você já alcançou o {tipoCalculo === 'curso' ? 'CRA' : 'CR'} desejado de {calculos.crDesejado.toFixed(2)}.</strong>
                             <span> Você pode relaxar nas próximas atividades.</span>
-                          )}
-                        </p>
-                      </div>
+                          </p>
+                        </div>
                     ) : calculos.possivel ? (
                       <div className="p-3 bg-green-100 border border-green-300 rounded">
                         <p className="text-green-800 font-medium">
                           ✅ Meta alcançável!
-                        </p>                        {calculos.tipoCalculo === 'parcial' ? (
-                          <p className="text-green-700">
-                            <strong>Você precisa de {calculos.mediaMinimaNecessaria.toFixed(1)} pontos por crédito restante</strong>
-                            <br/>
-                            <span className="text-xs">
-                              {calculos.creditosSemNota} créditos × {calculos.mediaMinimaNecessaria.toFixed(1)} = {calculos.pontosNecessarios.toFixed(1)} pontos totais necessários
-                            </span>
-                          </p>
-                        ) : (
-                          <p className="text-green-700">
-                            <strong>Nota mínima necessária por disciplina restante:</strong><br/>
-                            <span className="text-lg font-bold">{calculos.mediaMinimaNecessaria.toFixed(2)} pontos</span>
-                            <br/>
-                            <span className="text-xs">
-                              {calculos.disciplinasIncompletas.length} disciplinas × {calculos.mediaMinimaNecessaria.toFixed(2)} pontos
-                            </span>
-                          </p>
-                        )}
+                        </p>
+                        <p className="text-green-700">
+                          <strong>Você precisa de {calculos.mediaMinimaNecessaria.toFixed(1)} pontos por crédito restante</strong>
+                          <br/>
+                          <span className="text-xs">
+                            {calculos.creditosSemNota} créditos × {calculos.mediaMinimaNecessaria.toFixed(1)} = {calculos.pontosNecessarios.toFixed(1)} pontos totais necessários
+                          </span>
+                        </p>
                       </div>
                     ) : (
                       <div className="p-3 bg-red-100 border border-red-300 rounded">
                         <p className="text-red-800 font-medium">
                           ❌ Meta não alcançável
                         </p>
-                        {calculos.tipoCalculo === 'parcial' ? (
-                          <p className="text-red-700 text-xs">
-                            Mesmo obtendo 100% dos pontos ainda disponíveis, não será possível atingir o {tipoCalculo === 'curso' ? 'CRA' : 'CR'} desejado.
-                          </p>
-                        ) : (
-                          <p className="text-red-700 text-xs">
-                            Seria necessário obter {calculos.mediaMinimaNecessaria.toFixed(2)} pontos por disciplina, 
-                            mas o máximo possível é 100.
-                          </p>
-                        )}
+                        <p className="text-red-700 text-xs">
+                          Mesmo obtendo 100% dos pontos ainda disponíveis, não será possível atingir o {tipoCalculo === 'curso' ? 'CRA' : 'CR'} desejado.
+                        </p>
                       </div>
                     )}
                   </div>
                 </div>                {calculos.disciplinasIncompletas.length > 0 && (
                   <div className="mt-4">
                     <h4 className="font-medium text-gray-800 mb-2">
-                      Disciplinas {calculos.tipoCalculo === 'parcial' ? 'incompletas' : 'que precisam de nota'} ({calculos.disciplinasIncompletas.length}):
+                      Disciplinas incompletas ({calculos.disciplinasIncompletas.length}):
                     </h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {calculos.disciplinasIncompletas.map((disciplina, index) => (
                         <div key={index} className="text-sm bg-white p-2 rounded border">
                           <span className="font-medium">{disciplina.nome}</span>
                           <span className="text-gray-600 ml-2">({disciplina.creditos} créditos)</span>
-                          {calculos.tipoCalculo === 'parcial' && disciplina.pontosDisponiveis !== undefined && (
+                          {disciplina.pontosDisponiveis !== undefined && (
                             <div className="text-blue-600 text-xs mt-1">
                               {disciplina.pontosDisponiveis.toFixed(1)} pontos ainda disponíveis
                               {disciplina.notaAtual !== undefined && (
@@ -433,12 +363,13 @@ const CRDesejado = ({ disciplinas, disciplinasParciais, tipoCalculo, crAtual }: 
                               )}
                             </div>
                           )}
-                          {calculos.possivel && calculos.tipoCalculo !== 'parcial' && (
+                          {calculos.possivel && (
                             <div className="text-green-600 text-xs mt-1">
-                              Nota necessária: {calculos.mediaMinimaNecessaria.toFixed(2)} pts
+                              Pontos necessários: {calculos.mediaMinimaNecessaria.toFixed(2)} por crédito
                             </div>
                           )}
-                        </div>                      ))}
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
@@ -489,22 +420,17 @@ const CRDesejado = ({ disciplinas, disciplinasParciais, tipoCalculo, crAtual }: 
                               <Label className="text-xs font-medium text-gray-700">
                                 {disciplina.nome} ({disciplina.creditos} créditos)
                               </Label>
-                              {tipoCalculo === 'parcial' && (
-                                <div className="text-xs text-gray-500 mb-1">
-                                  Máximo: {disciplina.pontosDisponiveis?.toFixed(1)} pontos disponíveis
-                                </div>
-                              )}
+                              <div className="text-xs text-gray-500 mb-1">
+                                Máximo: {disciplina.pontosDisponiveis?.toFixed(1)} pontos disponíveis
+                              </div>
                               <Input
                                 type="number"
                                 min="0"
-                                max={tipoCalculo === 'parcial' ? disciplina.pontosDisponiveis : 100}
+                                max={disciplina.pontosDisponiveis}
                                 step="0.1"
                                 value={pontosSimulados[index.toString()] || ''}
                                 onChange={(e) => atualizarPontoSimulado(index.toString(), e.target.value)}
-                                placeholder={tipoCalculo === 'parcial' ? 
-                                  `0 - ${disciplina.pontosDisponiveis?.toFixed(1)}` : 
-                                  "0 - 100"
-                                }
+                                placeholder={`0 - ${disciplina.pontosDisponiveis?.toFixed(1)}`}
                                 className="mt-1 text-sm"
                               />
                             </div>

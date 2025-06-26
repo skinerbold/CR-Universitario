@@ -20,7 +20,12 @@ const CRAatualizado = ({ disciplinasParciais, periodos }: CRAatualizadoProps) =>
     const disciplinasCursadas = periodos.flatMap(periodo => periodo.disciplinas).filter(d => d.creditos > 0);
     
     // Disciplinas parciais com nota atual - apenas com créditos > 0
-    const disciplinasParciaisComNota = disciplinasParciais.filter(d => d.atividades.length > 0 && d.creditos > 0);
+    const disciplinasParciaisComNota = disciplinasParciais.filter(d => {
+      const temAvaliacao = d.modalidade === 'pontos' 
+        ? d.atividades.length > 0 
+        : d.provas.length > 0;
+      return temAvaliacao && d.creditos > 0;
+    });
     
     // Combina todas as disciplinas
     const todasDisciplinas = [
@@ -73,7 +78,12 @@ const CRAatualizado = ({ disciplinasParciais, periodos }: CRAatualizadoProps) =>
     );
 
     // Disciplinas parciais - apenas com créditos > 0
-    const disciplinasParciaisAtivas = disciplinasParciais.filter(d => d.atividades.length > 0 && d.creditos > 0);
+    const disciplinasParciaisAtivas = disciplinasParciais.filter(d => {
+      const temAvaliacao = d.modalidade === 'pontos' 
+        ? d.atividades.length > 0 
+        : d.provas.length > 0;
+      return temAvaliacao && d.creditos > 0;
+    });
     const creditosParciais = disciplinasParciaisAtivas.reduce(
       (acc, d) => acc + d.creditos, 0
     );

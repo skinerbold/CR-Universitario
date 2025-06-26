@@ -26,18 +26,31 @@ export const calcularNotaFinalDisciplina = (disciplina: DisciplinaParcial): numb
 
 /**
  * Calcula nota no sistema de médias (provas)
+ * Considera provas não cadastradas como nota 0 e calcula a média progressivamente
  */
 export const calcularNotaPorMedias = (disciplina: DisciplinaParcial): number => {
   if (!disciplina.provas || disciplina.provas.length === 0) {
     return 0;
   }
 
-  const somaNotas = disciplina.provas.reduce((sum, prova) => 
+  const totalAvaliacoes = disciplina.totalAvaliacoes || 4; // padrão 4 avaliações
+  
+  // Calcula a soma das notas das provas já cadastradas
+  const somaNotasRealizadas = disciplina.provas.reduce((sum, prova) => 
     sum + (prova.nota * prova.peso), 0);
-  const somaPesos = disciplina.provas.reduce((sum, prova) => 
+  const somaPesosRealizados = disciplina.provas.reduce((sum, prova) => 
     sum + prova.peso, 0);
 
-  return somaPesos > 0 ? somaNotas / somaPesos : 0;
+  // Para provas não realizadas, considera peso padrão = 1 e nota = 0
+  const provasNaoRealizadas = totalAvaliacoes - disciplina.provas.length;
+  const pesoProvasNaoRealizadas = provasNaoRealizadas * 1; // peso padrão = 1
+  const notaProvasNaoRealizadas = 0; // nota 0 para provas não realizadas
+
+  // Calcula a média considerando todas as avaliações (realizadas + não realizadas)
+  const somaNotasTotal = somaNotasRealizadas + notaProvasNaoRealizadas;
+  const somaPesosTotal = somaPesosRealizados + pesoProvasNaoRealizadas;
+
+  return somaPesosTotal > 0 ? somaNotasTotal / somaPesosTotal : 0;
 };
 
 /**

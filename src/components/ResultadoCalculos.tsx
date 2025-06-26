@@ -125,11 +125,6 @@ const ResultadoCalculos = ({ resultado, tipoCalculo, disciplinasParciais = [] }:
               <span className="block mt-1 text-xs">
                 <strong>Sistema de Médias:</strong> Nota = Média das provas (ponderada se houver pesos customizados)
               </span>
-              {temAmbosOsSistemas && (
-                <span className="block mt-2 text-xs text-blue-600 font-medium">
-                  ℹ️ Você está usando ambos os sistemas: {disciplinasPontos.length} disciplinas por pontos e {disciplinasMedias.length} por médias
-                </span>
-              )}
             </>
           )}
           {tipoCalculo === 'curso' && (

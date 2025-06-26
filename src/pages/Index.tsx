@@ -5,7 +5,6 @@ import DisciplinaForm from '@/components/DisciplinaForm';
 import DisciplinaParcialForm from '@/components/DisciplinaParcialForm';
 import DisciplinasList from '@/components/DisciplinasList';
 import DisciplinasParciaisList from '@/components/DisciplinasParciaisList';
-import DisciplinasMediasList from '@/components/DisciplinasMediasList';
 import PeriodoForm from '@/components/PeriodoForm';
 import PeriodosList from '@/components/PeriodosList';
 import CRAatualizado from '@/components/CRAatualizado';
@@ -50,10 +49,6 @@ const Index = () => {
     definirFaltas
   } = useCalculadora();
 
-  // Separa disciplinas por modalidade de avaliação
-  const disciplinasPontos = disciplinasParciais.filter(d => d.modalidade === 'pontos');
-  const disciplinasMedias = disciplinasParciais.filter(d => d.modalidade === 'medias');
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       <Header />
@@ -68,26 +63,14 @@ const Index = () => {
           <>
             <DisciplinaParcialForm onAddDisciplina={adicionarDisciplinaParcial} />
             
-            {/* Sistema de Pontos */}
-            {disciplinasPontos.length > 0 && (
+            {/* Listagem Unificada - Sistema de Pontos e Sistema de Médias */}
+            {disciplinasParciais.length > 0 && (
               <DisciplinasParciaisList 
-                disciplinas={disciplinasPontos}
+                disciplinas={disciplinasParciais}
                 onRemoveDisciplina={removerDisciplinaParcial}
                 onAddAtividade={adicionarAtividade}
                 onEditAtividade={editarAtividade}
                 onRemoveAtividade={removerAtividade}
-                onAdicionarFalta={adicionarFalta}
-                onAdicionarAulaDupla={adicionarAulaDupla}
-                onRemoverFalta={removerFalta}
-                onDefinirFaltas={definirFaltas}
-              />
-            )}
-            
-            {/* Sistema de Médias */}
-            {disciplinasMedias.length > 0 && (
-              <DisciplinasMediasList 
-                disciplinas={disciplinasMedias}
-                onRemoveDisciplina={removerDisciplinaParcial}
                 onAddProva={adicionarProva}
                 onEditProva={editarProva}
                 onRemoveProva={removerProva}
