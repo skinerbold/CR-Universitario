@@ -27,14 +27,16 @@ const CRDesejado = ({ disciplinas, disciplinasParciais, tipoCalculo, crAtual }: 
     let disciplinasParaCalcular: Array<{nome: string, creditos: number, notaAtual?: number, pontosDisponiveis?: number}> = [];
     
     if (tipoCalculo === 'parcial') {
-      disciplinasParaCalcular = disciplinasParciais.map(d => ({
+      // Filtra disciplinas parciais com créditos > 0
+      disciplinasParaCalcular = disciplinasParciais.filter(d => d.creditos > 0).map(d => ({
         nome: d.nome,
         creditos: d.creditos,
         notaAtual: d.notaParcial,
         pontosDisponiveis: 100 - (d.pontosConsumidos || 0)
       }));
     } else {
-      disciplinasParaCalcular = disciplinas.map(d => ({
+      // Filtra disciplinas com créditos > 0
+      disciplinasParaCalcular = disciplinas.filter(d => d.creditos > 0).map(d => ({
         nome: d.nome,
         creditos: d.creditos,
         notaAtual: d.nota,

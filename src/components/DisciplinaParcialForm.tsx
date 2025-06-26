@@ -23,8 +23,8 @@ const DisciplinaParcialForm = ({ onAddDisciplina }: DisciplinaParcialFormProps) 
 
     const creditosNum = parseInt(creditos);
 
-    if (creditosNum <= 0) {
-      alert('Os créditos devem ser maior que zero');
+    if (creditosNum < 0) {
+      alert('Os créditos devem ser maior ou igual a zero');
       return;
     }
 
@@ -67,7 +67,7 @@ const DisciplinaParcialForm = ({ onAddDisciplina }: DisciplinaParcialFormProps) 
             <Input
               id="creditos-parcial"
               type="number"
-              min="1"
+              min="0"
               value={creditos}
               onChange={(e) => setCreditos(e.target.value)}
               placeholder="4"

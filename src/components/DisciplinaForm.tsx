@@ -31,8 +31,8 @@ const DisciplinaForm = ({ onAddDisciplina }: DisciplinaFormProps) => {
       return;
     }
 
-    if (creditosNum <= 0) {
-      alert('Os créditos devem ser maior que zero');
+    if (creditosNum < 0) {
+      alert('Os créditos devem ser maior ou igual a zero');
       return;
     }
 
@@ -94,7 +94,7 @@ const DisciplinaForm = ({ onAddDisciplina }: DisciplinaFormProps) => {
             <Input
               id="creditos"
               type="number"
-              min="1"
+              min="0"
               value={creditos}
               onChange={(e) => setCreditos(e.target.value)}
               placeholder="4"

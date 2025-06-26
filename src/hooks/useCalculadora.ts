@@ -152,7 +152,8 @@ export const useCalculadora = () => {
   const calcularCRParcial = (disciplinasComNotas: DisciplinaParcial[]) => {
     if (disciplinasComNotas.length === 0) return null;
 
-    const disciplinasComNota = disciplinasComNotas.filter(d => d.atividades.length > 0);
+    // Filtra disciplinas que têm atividades E créditos > 0
+    const disciplinasComNota = disciplinasComNotas.filter(d => d.atividades.length > 0 && d.creditos > 0);
     if (disciplinasComNota.length === 0) return null;
 
     const somaNotasCreditos = disciplinasComNota.reduce(
@@ -177,8 +178,8 @@ export const useCalculadora = () => {
   const calcularCRCurso = (periodos: Periodo[]) => {
     if (periodos.length === 0) return null;
 
-    // Coleta todas as disciplinas de todos os períodos
-    const todasDisciplinas = periodos.flatMap(periodo => periodo.disciplinas);
+    // Coleta todas as disciplinas de todos os períodos, excluindo as com 0 créditos
+    const todasDisciplinas = periodos.flatMap(periodo => periodo.disciplinas).filter(d => d.creditos > 0);
     
     if (todasDisciplinas.length === 0) return null;
 
@@ -204,12 +205,16 @@ export const useCalculadora = () => {
   const calcularCR = (disciplinas: Disciplina[]) => {
     if (disciplinas.length === 0) return null;
 
-    const somaNotasCreditos = disciplinas.reduce(
+    // Filtra disciplinas com créditos > 0
+    const disciplinasComCreditos = disciplinas.filter(d => d.creditos > 0);
+    if (disciplinasComCreditos.length === 0) return null;
+
+    const somaNotasCreditos = disciplinasComCreditos.reduce(
       (acc, disciplina) => acc + (disciplina.nota * disciplina.creditos),
       0
     );
     
-    const totalCreditos = disciplinas.reduce(
+    const totalCreditos = disciplinasComCreditos.reduce(
       (acc, disciplina) => acc + disciplina.creditos,
       0
     );
@@ -219,7 +224,7 @@ export const useCalculadora = () => {
     return {
       mediaGeral,
       totalCreditos,
-      totalDisciplinas: disciplinas.length
+      totalDisciplinas: disciplinasComCreditos.length
     };
   };
 
@@ -316,6 +321,55 @@ export const useCalculadora = () => {
     updateLastModified();
   }, [setDisciplinasParciais, updateLastModified]);
 
+  const editarDisciplinaPeriodo = useCallback((periodoId: string, disciplinaId: string, dadosAtualizados: Omit<Disciplina, 'id'>) => {
+    setPeriodos(prev => 
+      prev.map(periodo => {
+        if (periodo.id === periodoId) {
+          const novasDisciplinas = periodo.disciplinas.map(disciplina =>
+            disciplina.id === disciplinaId
+              ? { ...disciplina, ...dadosAtualizados }
+              : disciplina
+          );
+          return { ...periodo, disciplinas: novasDisciplinas };
+        }
+        return periodo;
+      })
+    );
+    updateLastModified();
+  }, [setPeriodos, updateLastModified]);
+
+  const adicionarDisciplinaPeriodo = useCallback((periodoId: string, novaDisciplina: Omit<Disciplina, 'id'>) => {
+    const disciplinaComId: Disciplina = {
+      ...novaDisciplina,
+      id: Date.now().toString() + Math.random().toString(36)
+    };
+    
+    setPeriodos(prev => 
+      prev.map(periodo => {
+        if (periodo.id === periodoId) {
+          return { ...periodo, disciplinas: [...periodo.disciplinas, disciplinaComId] };
+        }
+        return periodo;
+      })
+    );
+    updateLastModified();
+  }, [setPeriodos, updateLastModified]);
+
+  const removerDisciplinaPeriodo = useCallback((periodoId: string, disciplinaId: string) => {
+    setPeriodos(prev => 
+      prev.map(periodo => {
+        if (periodo.id === periodoId) {
+          const novasDisciplinas = periodo.disciplinas.filter(disciplina => 
+            disciplina.id !== disciplinaId
+          );
+          return { ...periodo, disciplinas: novasDisciplinas };
+        }
+        return periodo;
+      })
+    );
+    updateLastModified();
+  }, [setPeriodos, updateLastModified]);
+
   // Funções de persistência
   const persistence = useCalculadoraPersistence();
 
@@ -341,6 +395,9 @@ export const useCalculadora = () => {
     adicionarPeriodo,
     removerPeriodo,
     limparPeriodos,
+    editarDisciplinaPeriodo,
+    adicionarDisciplinaPeriodo,
+    removerDisciplinaPeriodo,
     setTipoCalculo,
     // Funções de persistência
     persistence: {

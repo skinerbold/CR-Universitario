@@ -7,6 +7,7 @@
  */
 export const calcularMaximoFaltas = (creditos: number): number => {
   const tabelaFaltas: { [key: number]: number } = {
+    0: 7,  // Disciplinas sem crédito: mesmo limite de disciplinas de 2 créditos
     2: 7,
     3: 11,
     4: 14,
@@ -16,7 +17,7 @@ export const calcularMaximoFaltas = (creditos: number): number => {
     8: 28
   };
 
-  return tabelaFaltas[creditos] || 0;
+  return tabelaFaltas[creditos] || 14; // Default: 14 faltas para disciplinas > 8 créditos
 };
 
 /**

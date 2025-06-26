@@ -89,6 +89,9 @@ const ResultadoCalculos = ({ resultado, tipoCalculo }: ResultadoCalculosProps) =
               * CRA considera todas as disciplinas cursadas em todos os períodos do curso
             </span>
           )}
+          <span className="block mt-1 text-xs text-orange-600">
+            * Disciplinas com 0 créditos não interferem no cálculo do {tipoCalculo === 'curso' ? 'CRA' : 'CR'}, mas podem ter atividades e controle de presença
+          </span>
         </p>
       </div>
     </div>

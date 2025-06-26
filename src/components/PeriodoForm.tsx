@@ -53,8 +53,8 @@ const PeriodoForm = ({ onAddPeriodo }: PeriodoFormProps) => {
         return;
       }
 
-      if (creditosNum <= 0) {
-        alert('Os créditos devem ser maior que zero');
+      if (creditosNum < 0) {
+        alert('Os créditos devem ser maior ou igual a zero');
         return;
       }
 
@@ -127,7 +127,7 @@ const PeriodoForm = ({ onAddPeriodo }: PeriodoFormProps) => {
                   <Label className="text-xs text-gray-600">Créditos</Label>
                   <Input
                     type="number"
-                    min="1"
+                    min="0"
                     value={disciplina.creditos}
                     onChange={(e) => atualizarDisciplina(index, 'creditos', e.target.value)}
                     placeholder="4"

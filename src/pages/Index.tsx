@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Header from '@/components/Header';
 import TipoCalculoSelector from '@/components/TipoCalculoSelector';
@@ -8,6 +7,7 @@ import DisciplinasList from '@/components/DisciplinasList';
 import DisciplinasParciaisList from '@/components/DisciplinasParciaisList';
 import PeriodoForm from '@/components/PeriodoForm';
 import PeriodosList from '@/components/PeriodosList';
+import CRAatualizado from '@/components/CRAatualizado';
 import ResultadoCalculos from '@/components/ResultadoCalculos';
 import CRDesejado from '@/components/CRDesejado';
 import Calculadora from '@/components/Calculadora';
@@ -36,6 +36,9 @@ const Index = () => {
     adicionarPeriodo,
     removerPeriodo,
     limparPeriodos,
+    editarDisciplinaPeriodo,
+    adicionarDisciplinaPeriodo,
+    removerDisciplinaPeriodo,
     setTipoCalculo,
     adicionarFalta,
     adicionarAulaDupla,
@@ -81,6 +84,26 @@ const Index = () => {
                 </Button>
               </div>
             )}
+            
+            {/* Box do CR Parcial e Calculadora de CR Desejado agrupados */}
+            <div className="bg-white rounded shadow p-4 mb-6">
+              <ResultadoCalculos 
+                resultado={resultado}
+                tipoCalculo={tipoCalculo}
+              />
+              <CRDesejado
+                disciplinas={disciplinas}
+                disciplinasParciais={disciplinasParciais}
+                tipoCalculo={tipoCalculo}
+                crAtual={resultado?.mediaGeral}
+              />
+            </div>
+            
+            {/* Box separado do CRA Atualizado (períodos + parciais) */}
+            <CRAatualizado 
+              disciplinasParciais={disciplinasParciais}
+              periodos={periodos}
+            />
           </>
         ) : tipoCalculo === 'curso' ? (
           <>
@@ -89,6 +112,9 @@ const Index = () => {
             <PeriodosList 
               periodos={periodos}
               onRemovePeriodo={removerPeriodo}
+              onEditarDisciplinaPeriodo={editarDisciplinaPeriodo}
+              onAdicionarDisciplinaPeriodo={adicionarDisciplinaPeriodo}
+              onRemoverDisciplinaPeriodo={removerDisciplinaPeriodo}
             />
             
             {periodos.length > 0 && (
@@ -128,17 +154,21 @@ const Index = () => {
           </>
         )}
         
-        <ResultadoCalculos 
-          resultado={resultado}
-          tipoCalculo={tipoCalculo}
-        />
-
-        <CRDesejado
-          disciplinas={disciplinas}
-          disciplinasParciais={disciplinasParciais}
-          tipoCalculo={tipoCalculo}
-          crAtual={resultado?.mediaGeral}
-        />
+        {/* Componentes para outros tipos de cálculo (período e curso) */}
+        {tipoCalculo !== 'parcial' && (
+          <>
+            <ResultadoCalculos 
+              resultado={resultado}
+              tipoCalculo={tipoCalculo}
+            />
+            <CRDesejado
+              disciplinas={disciplinas}
+              disciplinasParciais={disciplinasParciais}
+              tipoCalculo={tipoCalculo}
+              crAtual={resultado?.mediaGeral}
+            />
+          </>
+        )}
 
         <GerenciadorPersistencia />
       </main>

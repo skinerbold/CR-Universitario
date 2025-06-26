@@ -39,6 +39,7 @@ const DisciplinasParciaisList = ({
   const [nomeAtividadeEdicao, setNomeAtividadeEdicao] = useState('');
   const [notaObtidaEdicao, setNotaObtidaEdicao] = useState('');
   const [notaTotalEdicao, setNotaTotalEdicao] = useState('');
+  const [disciplinaPulsando, setDisciplinaPulsando] = useState<string | null>(null);
 
   const toggleMinimized = (disciplinaId: string) => {
     setMinimizedDisciplinas(prev => {
@@ -82,7 +83,15 @@ const DisciplinasParciaisList = ({
       nome: nomeAtividade.trim() || undefined,
       notaObtida: notaObtidaNum,
       notaTotal: notaTotalNum
-    });    setNomeAtividade('');
+    });
+
+    // Ativar animação de pulsação verde
+    setDisciplinaPulsando(disciplinaId);
+    setTimeout(() => {
+      setDisciplinaPulsando(null);
+    }, 1500); // Duração da animação
+
+    setNomeAtividade('');
     setNotaObtida('');
     setNotaTotal('');
   };
@@ -167,12 +176,23 @@ const DisciplinasParciaisList = ({
         {disciplinas.map((disciplina) => (
           <div
             key={disciplina.id}
-            className="border border-gray-200 rounded-lg p-4 bg-gray-50"
+            className={`border border-gray-200 rounded-lg p-4 bg-gray-50 transition-all duration-1500 ${
+              disciplinaPulsando === disciplina.id 
+                ? 'animate-pulse bg-green-100 border-green-300 shadow-lg' 
+                : disciplina.creditos === 0 
+                ? 'border-l-4 border-l-orange-400 bg-orange-50'
+                : ''
+            }`}
           >            <div className="flex items-center justify-between mb-3">
               <div className="flex-1 flex items-center gap-3">
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <h3 className="font-medium text-gray-800">{disciplina.nome}</h3>
+                    {disciplina.creditos === 0 && (
+                      <span className="text-xs bg-orange-200 text-orange-800 px-2 py-1 rounded">
+                        Sem crédito
+                      </span>
+                    )}
                     <Button
                       onClick={() => onRemoveDisciplina(disciplina.id)}
                       variant="ghost"
