@@ -101,3 +101,60 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Animação customizada para pulsação verde - funciona em mobile e desktop */
+@keyframes green-pulse {
+  0% {
+    background-color: rgb(240 253 244); /* green-50 */
+    border-color: rgb(34 197 94); /* green-500 */
+    box-shadow: 0 4px 6px -1px rgba(34, 197, 94, 0.1), 0 2px 4px -1px rgba(34, 197, 94, 0.06);
+    transform: scale(1);
+  }
+  50% {
+    background-color: rgb(187 247 208); /* green-200 */
+    border-color: rgb(34 197 94); /* green-500 */
+    box-shadow: 0 10px 15px -3px rgba(34, 197, 94, 0.3), 0 4px 6px -2px rgba(34, 197, 94, 0.15);
+    transform: scale(1.02);
+  }
+  100% {
+    background-color: rgb(240 253 244); /* green-50 */
+    border-color: rgb(34 197 94); /* green-500 */
+    box-shadow: 0 4px 6px -1px rgba(34, 197, 94, 0.1), 0 2px 4px -1px rgba(34, 197, 94, 0.06);
+    transform: scale(1);
+  }
+}
+
+/* Versão para mobile - mais sutil */
+@media (max-width: 768px) {
+  @keyframes green-pulse {
+    0% {
+      background-color: rgb(240 253 244); /* green-50 */
+      border-color: rgb(34 197 94); /* green-500 */
+      box-shadow: 0 2px 4px rgba(34, 197, 94, 0.2);
+    }
+    50% {
+      background-color: rgb(187 247 208); /* green-200 */
+      border-color: rgb(34 197 94); /* green-500 */
+      box-shadow: 0 4px 8px rgba(34, 197, 94, 0.3);
+    }
+    100% {
+      background-color: rgb(240 253 244); /* green-50 */
+      border-color: rgb(34 197 94); /* green-500 */
+      box-shadow: 0 2px 4px rgba(34, 197, 94, 0.2);
+    }
+  }
+}
+
+.green-pulse-animation {
+  animation: green-pulse 1.5s ease-in-out;
+  /* Força a animação mesmo em dispositivos que reduzem motion */
+  animation-fill-mode: both;
+}
+
+/* Garante que a animação funcione mesmo com prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .green-pulse-animation {
+    animation: green-pulse 1.5s ease-in-out;
+    animation-fill-mode: both;
+  }
+}

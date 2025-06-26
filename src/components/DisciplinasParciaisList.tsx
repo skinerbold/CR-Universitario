@@ -87,9 +87,13 @@ const DisciplinasParciaisList = ({
 
     // Ativar animação de pulsação verde
     setDisciplinaPulsando(disciplinaId);
-    setTimeout(() => {
-      setDisciplinaPulsando(null);
-    }, 1500); // Duração da animação
+    
+    // Força o reflow para garantir que a animação funcione em mobile
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        setDisciplinaPulsando(null);
+      }, 1500); // Duração da animação
+    });
 
     setNomeAtividade('');
     setNotaObtida('');
@@ -176,13 +180,19 @@ const DisciplinasParciaisList = ({
         {disciplinas.map((disciplina) => (
           <div
             key={disciplina.id}
-            className={`border border-gray-200 rounded-lg p-4 bg-gray-50 transition-all duration-1500 ${
+            className={`border border-gray-200 rounded-lg p-4 bg-gray-50 transition-all duration-300 ${
               disciplinaPulsando === disciplina.id 
-                ? 'animate-pulse bg-green-100 border-green-300 shadow-lg' 
+                ? 'green-pulse-animation !important' 
                 : disciplina.creditos === 0 
                 ? 'border-l-4 border-l-orange-400 bg-orange-50'
                 : ''
             }`}
+            style={disciplinaPulsando === disciplina.id ? {
+              animationName: 'green-pulse',
+              animationDuration: '1.5s',
+              animationTimingFunction: 'ease-in-out',
+              animationFillMode: 'both'
+            } : {}}
           >            <div className="flex items-center justify-between mb-3">
               <div className="flex-1 flex items-center gap-3">
                 <div className="flex-1">
