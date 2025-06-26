@@ -1,14 +1,15 @@
 
 import React from 'react';
-import { CalculoResultado, TipoCalculo } from '@/types';
-import { Award, BookOpen, Hash } from 'lucide-react';
+import { CalculoResultado, TipoCalculo, DisciplinaParcial } from '@/types';
+import { Award, BookOpen, Hash, Calculator, Star } from 'lucide-react';
 
 interface ResultadoCalculosProps {
   resultado: CalculoResultado | null;
   tipoCalculo: TipoCalculo;
+  disciplinasParciais?: DisciplinaParcial[];
 }
 
-const ResultadoCalculos = ({ resultado, tipoCalculo }: ResultadoCalculosProps) => {
+const ResultadoCalculos = ({ resultado, tipoCalculo, disciplinasParciais = [] }: ResultadoCalculosProps) => {
   if (!resultado) {
     return null;
   }
@@ -26,6 +27,11 @@ const ResultadoCalculos = ({ resultado, tipoCalculo }: ResultadoCalculosProps) =
     if (media >= 60) return 'bg-yellow-50 border-yellow-200';
     return 'bg-red-50 border-red-200';
   };
+
+  // Informações sobre as modalidades de avaliação (apenas para tipo parcial)
+  const disciplinasPontos = disciplinasParciais.filter(d => d.modalidade === 'pontos');
+  const disciplinasMedias = disciplinasParciais.filter(d => d.modalidade === 'medias');
+  const temAmbosOsSistemas = tipoCalculo === 'parcial' && disciplinasPontos.length > 0 && disciplinasMedias.length > 0;
 
   return (
     <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6">
@@ -74,15 +80,57 @@ const ResultadoCalculos = ({ resultado, tipoCalculo }: ResultadoCalculosProps) =
           </div>
         </div>
       </div>
+
+      {/* Informações sobre modalidades de avaliação - apenas no CR parcial */}
+      {tipoCalculo === 'parcial' && disciplinasParciais.length > 0 && (
+        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {disciplinasPontos.length > 0 && (
+            <div className="p-3 rounded-lg border-2 bg-orange-50 border-orange-200">
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-1 text-lg font-bold text-orange-600 mb-1">
+                  <Calculator className="w-4 h-4" />
+                  {disciplinasPontos.length}
+                </div>
+                <div className="text-xs text-gray-600 font-medium">
+                  Sistema de Pontos
+                </div>
+              </div>
+            </div>
+          )}
+          {disciplinasMedias.length > 0 && (
+            <div className="p-3 rounded-lg border-2 bg-purple-50 border-purple-200">
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-1 text-lg font-bold text-purple-600 mb-1">
+                  <Star className="w-4 h-4" />
+                  {disciplinasMedias.length}
+                </div>
+                <div className="text-xs text-gray-600 font-medium">
+                  Sistema de Médias
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
       
       <div className="mt-4 p-4 bg-gray-50 rounded-lg">
         <p className="text-sm text-gray-600 text-center">
           <strong>Fórmula {tipoCalculo === 'curso' ? 'CRA' : 'CR'}:</strong> 
           {tipoCalculo === 'curso' ? ' CRA = Σ(Nota × Créditos) ÷ Σ(Créditos)' : ' Média Ponderada = Σ(Nota × Créditos) ÷ Σ(Créditos)'}
           {tipoCalculo === 'parcial' && (
-            <span className="block mt-1 text-xs">
-              * Nota de cada disciplina = Soma dos pontos obtidos nas atividades (máx. 100 pontos por disciplina)
-            </span>
+            <>
+              <span className="block mt-2 text-xs">
+                <strong>Sistema de Pontos:</strong> Nota = Soma dos pontos obtidos nas atividades (máx. 100 pontos por disciplina)
+              </span>
+              <span className="block mt-1 text-xs">
+                <strong>Sistema de Médias:</strong> Nota = Média das provas (ponderada se houver pesos customizados)
+              </span>
+              {temAmbosOsSistemas && (
+                <span className="block mt-2 text-xs text-blue-600 font-medium">
+                  ℹ️ Você está usando ambos os sistemas: {disciplinasPontos.length} disciplinas por pontos e {disciplinasMedias.length} por médias
+                </span>
+              )}
+            </>
           )}
           {tipoCalculo === 'curso' && (
             <span className="block mt-1 text-xs text-blue-600">

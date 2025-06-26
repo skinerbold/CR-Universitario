@@ -1,7 +1,13 @@
-import { useState, useMemo, useCallback } from 'react';
-import { Disciplina, CalculoResultado, TipoCalculo, DisciplinaParcial, Atividade, Periodo } from '@/types';
+import { useState, useMemo, useCallback, useEffect } from 'react';
+import { Disciplina, CalculoResultado, TipoCalculo, DisciplinaParcial, Atividade, Periodo, Prova, ModalidadeAvaliacao } from '@/types';
 import { usePersistentState, useCalculadoraPersistence } from './usePersistentState';
 import { estaReprovadoPorFaltas } from '@/utils/faltasUtils';
+import { 
+  migrarDisciplinaParaNovoFormato, 
+  calcularNotaFinalDisciplina,
+  verificarNecessidadeMigracao,
+  executarMigracaoCompleta
+} from '@/utils/avaliacaoUtils';
 
 export const useCalculadora = () => {
   const { getStorageKey } = useCalculadoraPersistence();
@@ -16,6 +22,18 @@ export const useCalculadora = () => {
     getStorageKey('disciplinas-parciais'),
     []
   );
+
+  // Migração automática das disciplinas existentes para o novo formato
+  useEffect(() => {
+    const disciplinasAtuais = JSON.parse(localStorage.getItem(getStorageKey('disciplinas-parciais')) || '[]');
+    
+    if (disciplinasAtuais.length > 0 && verificarNecessidadeMigracao(disciplinasAtuais)) {
+      console.log('🔄 Migrando disciplinas para novo formato com modalidades...');
+      const disciplinasMigradas = executarMigracaoCompleta(disciplinasAtuais);
+      setDisciplinasParciais(disciplinasMigradas);
+      console.log('✅ Migração concluída!', disciplinasMigradas.length, 'disciplinas migradas');
+    }
+  }, [getStorageKey, setDisciplinasParciais]);
 
   const [periodos, setPeriodos] = usePersistentState<Periodo[]>(
     getStorageKey('periodos'),
@@ -41,11 +59,13 @@ export const useCalculadora = () => {
     updateLastModified();
   }, [setDisciplinas, updateLastModified]);
 
-  const adicionarDisciplinaParcial = useCallback((novaDisciplina: Omit<DisciplinaParcial, 'id' | 'atividades'>) => {
+  const adicionarDisciplinaParcial = useCallback((novaDisciplina: Omit<DisciplinaParcial, 'id' | 'atividades' | 'provas'>) => {
     const disciplinaComId: DisciplinaParcial = {
       ...novaDisciplina,
       id: Date.now().toString() + Math.random().toString(36),
-      atividades: []
+      atividades: [],
+      provas: [],
+      modalidade: novaDisciplina.modalidade || 'pontos'
     };
     setDisciplinasParciais(prev => [...prev, disciplinaComId]);
     updateLastModified();
@@ -61,6 +81,56 @@ export const useCalculadora = () => {
       prev.map(disciplina => 
         disciplina.id === disciplinaId 
           ? { ...disciplina, atividades: [...disciplina.atividades, atividadeComId] }
+          : disciplina
+      )
+    );
+    updateLastModified();
+  }, [setDisciplinasParciais, updateLastModified]);
+
+  // === FUNÇÕES PARA SISTEMA DE MÉDIAS (PROVAS) ===
+  
+  const adicionarProva = useCallback((disciplinaId: string, prova: Omit<Prova, 'id'>) => {
+    const provaComId: Prova = {
+      ...prova,
+      id: Date.now().toString() + Math.random().toString(36)
+    };
+    
+    setDisciplinasParciais(prev => 
+      prev.map(disciplina => 
+        disciplina.id === disciplinaId 
+          ? { ...disciplina, provas: [...disciplina.provas, provaComId] }
+          : disciplina
+      )
+    );
+    updateLastModified();
+  }, [setDisciplinasParciais, updateLastModified]);
+
+  const editarProva = useCallback((disciplinaId: string, provaId: string, dadosAtualizados: Omit<Prova, 'id'>) => {
+    setDisciplinasParciais(prev => 
+      prev.map(disciplina => 
+        disciplina.id === disciplinaId 
+          ? {
+              ...disciplina,
+              provas: disciplina.provas.map(prova =>
+                prova.id === provaId 
+                  ? { ...prova, ...dadosAtualizados }
+                  : prova
+              )
+            }
+          : disciplina
+      )
+    );
+    updateLastModified();
+  }, [setDisciplinasParciais, updateLastModified]);
+
+  const removerProva = useCallback((disciplinaId: string, provaId: string) => {
+    setDisciplinasParciais(prev => 
+      prev.map(disciplina => 
+        disciplina.id === disciplinaId 
+          ? {
+              ...disciplina,
+              provas: disciplina.provas.filter(prova => prova.id !== provaId)
+            }
           : disciplina
       )
     );
@@ -134,8 +204,11 @@ export const useCalculadora = () => {
 
   const disciplinasParciaisComNotas = useMemo(() => {
     return disciplinasParciais.map(disciplina => {
-      const notaParcial = calcularNotaParcial(disciplina.atividades);
-      const pontosConsumidos = calcularPontosConsumidos(disciplina.atividades);
+      // Calcula nota baseada na modalidade da disciplina
+      const notaParcial = calcularNotaFinalDisciplina(disciplina);
+      const pontosConsumidos = disciplina.modalidade === 'pontos' 
+        ? calcularPontosConsumidos(disciplina.atividades)
+        : 0; // No sistema de médias, não há "pontos consumidos"
       
       // Se reprovado por faltas, nota final é 0
       const faltasAtuais = disciplina.faltas || 0;
@@ -384,10 +457,16 @@ export const useCalculadora = () => {
     adicionarAtividade,
     editarAtividade,
     removerAtividade,
+    // Funções para sistema de médias (provas)
+    adicionarProva,
+    editarProva,
+    removerProva,
+    // Funções de faltas
     adicionarFalta,
     adicionarAulaDupla,
     removerFalta,
     definirFaltas,
+    // Funções gerais
     removerDisciplina,
     removerDisciplinaParcial,
     limparDisciplinas,
