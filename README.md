@@ -146,12 +146,18 @@ VITE_VERSION=1.0.0
 - Média aritmética ponderada
 - Configuração de número de avaliações
 
-## 🔢 **Arredondamento Acadêmico**
+### 🔢 **Arredondamento Acadêmico**
 - **Arredondamento Inteligente**: Notas finais seguem o padrão acadêmico
   - 86.5 → 87 (arredonda para cima)
   - 86.4 → 86 (arredonda para baixo)
   - 86.7 → 87 (arredonda para cima)
 - **Aplicação Automática**: Funciona em ambos os sistemas (pontos e médias)
+
+### 📝 **Sistema de Recuperação (Final)**
+- **Detecção Automática**: Identifica quando aluno fica de final (40-59 pontos)
+- **Cálculo de Meta**: Informa nota mínima necessária na recuperação
+- **Fórmula**: (Nota do Período + Nota da Recuperação) ÷ 2 ≥ 60
+- **Status Claros**: Aprovado, Final, Reprovado por Nota/Faltas
 
 ## 🤝 Contribuição
 

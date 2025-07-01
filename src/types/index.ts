@@ -29,6 +29,14 @@ export interface Prova {
 
 export type ModalidadeAvaliacao = 'pontos' | 'medias';
 
+export type StatusDisciplina = 'aprovado' | 'final' | 'reprovado_nota' | 'reprovado_faltas' | 'em_andamento';
+
+export interface Recuperacao {
+  notaMinima: number; // Nota mínima necessária na recuperação para passar
+  notaRecuperacao?: number; // Nota obtida na recuperação (se já realizada)
+  notaFinalComRecuperacao?: number; // Nota final após recuperação
+}
+
 export interface DisciplinaParcial {
   id: string;
   nome: string;
@@ -43,6 +51,8 @@ export interface DisciplinaParcial {
   totalAvaliacoes?: number; // Quantidade total de avaliações planejadas
   // Campos comuns
   faltas?: number;
+  // Sistema de recuperação
+  recuperacao?: Recuperacao;
 }
 
 export interface CalculoResultado {

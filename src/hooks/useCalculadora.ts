@@ -6,7 +6,11 @@ import {
   migrarDisciplinaParaNovoFormato, 
   calcularNotaFinalDisciplina,
   verificarNecessidadeMigracao,
-  executarMigracaoCompleta
+  executarMigracaoCompleta,
+  determinarStatusDisciplina,
+  calcularNotaMinimaRecuperacao,
+  calcularNotaFinalRecuperacao,
+  disciplinaEstaCompleta
 } from '@/utils/avaliacaoUtils';
 
 export const useCalculadora = () => {
@@ -221,10 +225,27 @@ export const useCalculadora = () => {
       const faltasAtuais = disciplinaSegura.faltas || 0;
       const notaFinal = estaReprovadoPorFaltas(disciplinaSegura.creditos, faltasAtuais) ? 0 : notaParcial;
       
+      // Determina status da disciplina e calcula recuperação se necessário
+      const status = determinarStatusDisciplina(notaFinal, disciplinaSegura.creditos, faltasAtuais);
+      let recuperacao = disciplinaSegura.recuperacao;
+      
+      // Se a disciplina está completa e ficou de final, calcula a recuperação
+      if (status === 'final' && disciplinaEstaCompleta(disciplinaSegura)) {
+        const notaMinima = calcularNotaMinimaRecuperacao(notaFinal);
+        recuperacao = {
+          notaMinima,
+          notaRecuperacao: recuperacao?.notaRecuperacao,
+          notaFinalComRecuperacao: recuperacao?.notaRecuperacao 
+            ? calcularNotaFinalRecuperacao(notaFinal, recuperacao.notaRecuperacao)
+            : undefined
+        };
+      }
+      
       return {
         ...disciplinaSegura,
         notaParcial: notaFinal,
-        pontosConsumidos
+        pontosConsumidos,
+        recuperacao
       };
     });
   }, [disciplinasParciais]);
@@ -460,6 +481,43 @@ export const useCalculadora = () => {
     updateLastModified();
   }, [setPeriodos, updateLastModified]);
 
+  const adicionarNotaRecuperacao = useCallback((disciplinaId: string, notaRecuperacao: number) => {
+    setDisciplinasParciais(prev => prev.map(disciplina => {
+      if (disciplina.id === disciplinaId) {
+        const notaPeriodo = disciplina.notaParcial || 0;
+        const notaFinalComRecuperacao = calcularNotaFinalRecuperacao(notaPeriodo, notaRecuperacao);
+        
+        return {
+          ...disciplina,
+          recuperacao: {
+            ...disciplina.recuperacao,
+            notaRecuperacao,
+            notaFinalComRecuperacao
+          }
+        };
+      }
+      return disciplina;
+    }));
+    updateLastModified();
+  }, [setDisciplinasParciais, updateLastModified]);
+
+  const removerNotaRecuperacao = useCallback((disciplinaId: string) => {
+    setDisciplinasParciais(prev => prev.map(disciplina => {
+      if (disciplina.id === disciplinaId && disciplina.recuperacao) {
+        return {
+          ...disciplina,
+          recuperacao: {
+            ...disciplina.recuperacao,
+            notaRecuperacao: undefined,
+            notaFinalComRecuperacao: undefined
+          }
+        };
+      }
+      return disciplina;
+    }));
+    updateLastModified();
+  }, [setDisciplinasParciais, updateLastModified]);
+
   // Funções de persistência
   const persistence = useCalculadoraPersistence();
 
@@ -483,6 +541,9 @@ export const useCalculadora = () => {
     adicionarAulaDupla,
     removerFalta,
     definirFaltas,
+    // Funções de recuperação
+    adicionarNotaRecuperacao,
+    removerNotaRecuperacao,
     // Funções gerais
     removerDisciplina,
     removerDisciplinaParcial,

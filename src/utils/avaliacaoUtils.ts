@@ -1,4 +1,5 @@
-import { DisciplinaParcial, Prova, ModalidadeAvaliacao } from '@/types';
+import { DisciplinaParcial, Prova, ModalidadeAvaliacao, StatusDisciplina } from '@/types';
+import { estaReprovadoPorFaltas } from '@/utils/faltasUtils';
 
 /**
  * Arredonda nota seguindo o padrão acadêmico brasileiro:
@@ -176,4 +177,61 @@ export const verificarNecessidadeMigracao = (disciplinas: any[]): boolean => {
  */
 export const executarMigracaoCompleta = (disciplinas: any[]): DisciplinaParcial[] => {
   return disciplinas.map(migrarDisciplinaParaNovoFormato);
+};
+
+/**
+ * Determina o status acadêmico de uma disciplina baseado na nota e faltas
+ */
+export const determinarStatusDisciplina = (notaPeriodo: number, creditos: number, faltas: number = 0): StatusDisciplina => {
+  // Primeiro verifica reprovação por faltas
+  if (estaReprovadoPorFaltas(creditos, faltas)) {
+    return 'reprovado_faltas';
+  }
+  
+  // Se não tem faltas excessivas, verifica por nota
+  if (notaPeriodo >= 60) {
+    return 'aprovado';
+  } else if (notaPeriodo >= 40) {
+    return 'final';
+  } else {
+    return 'reprovado_nota';
+  }
+};
+
+/**
+ * Calcula a nota mínima necessária na recuperação para ser aprovado
+ * Fórmula: (notaPeriodo + notaRecuperacao) / 2 >= 60
+ * Logo: notaRecuperacao >= (60 * 2) - notaPeriodo
+ */
+export const calcularNotaMinimaRecuperacao = (notaPeriodo: number): number => {
+  const notaMinima = (60 * 2) - notaPeriodo;
+  // A nota máxima possível é 100, então limitamos
+  return Math.min(100, Math.max(0, notaMinima));
+};
+
+/**
+ * Calcula a nota final após recuperação
+ * Fórmula: (notaPeriodo + notaRecuperacao) / 2
+ */
+export const calcularNotaFinalRecuperacao = (notaPeriodo: number, notaRecuperacao: number): number => {
+  const notaFinal = (notaPeriodo + notaRecuperacao) / 2;
+  return arredondarNotaAcademica(notaFinal);
+};
+
+/**
+ * Verifica se uma disciplina está completa (todas as avaliações feitas)
+ */
+export const disciplinaEstaCompleta = (disciplina: DisciplinaParcial): boolean => {
+  if (disciplina.modalidade === 'medias') {
+    const provas = disciplina.provas || [];
+    const totalAvaliacoes = disciplina.totalAvaliacoes || 4;
+    return provas.length >= totalAvaliacoes;
+  } else {
+    // Para sistema de pontos, considera completa quando todos os 100 pontos foram distribuídos
+    const atividades = disciplina.atividades || [];
+    if (atividades.length === 0) return false;
+    
+    const pontosDistribuidos = atividades.reduce((total, atividade) => total + atividade.notaTotal, 0);
+    return pontosDistribuidos >= 100;
+  }
 };

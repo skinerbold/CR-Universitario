@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import ControleFaltas from './ControleFaltas';
 import { estaReprovadoPorFaltas } from '@/utils/faltasUtils';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { calcularNotaPorMedias, calcularProgressoDisciplina, podeAdicionarProva } from '@/utils/avaliacaoUtils';
+import { calcularNotaFinalDisciplina, calcularProgressoDisciplina, podeAdicionarProva, determinarStatusDisciplina, disciplinaEstaCompleta } from '@/utils/avaliacaoUtils';
 
 interface DisciplinasParciaisListProps {
   disciplinas: DisciplinaParcial[];
@@ -22,6 +22,8 @@ interface DisciplinasParciaisListProps {
   onAdicionarAulaDupla: (disciplinaId: string) => void;
   onRemoverFalta: (disciplinaId: string) => void;
   onDefinirFaltas: (disciplinaId: string, quantidade: number) => void;
+  onAdicionarNotaRecuperacao: (disciplinaId: string, notaRecuperacao: number) => void;
+  onRemoverNotaRecuperacao: (disciplinaId: string) => void;
 }
 
 const DisciplinasParciaisList = ({ 
@@ -36,7 +38,9 @@ const DisciplinasParciaisList = ({
   onAdicionarFalta,
   onAdicionarAulaDupla,
   onRemoverFalta,
-  onDefinirFaltas
+  onDefinirFaltas,
+  onAdicionarNotaRecuperacao,
+  onRemoverNotaRecuperacao
 }: DisciplinasParciaisListProps) => {
   const [expandedDisciplina, setExpandedDisciplina] = useState<string | null>(null);
   const [minimizedDisciplinas, setMinimizedDisciplinas] = useState<Set<string>>(new Set());
@@ -56,6 +60,9 @@ const DisciplinasParciaisList = ({
   const [notaProvaEdicao, setNotaProvaEdicao] = useState('');
   const [pesoProvaEdicao, setPesoProvaEdicao] = useState('');
   const [boxPulsando, setBoxPulsando] = useState<string | null>(null);
+  // Estados para recuperação
+  const [notaRecuperacao, setNotaRecuperacao] = useState('');
+  const [editandoRecuperacao, setEditandoRecuperacao] = useState<string | null>(null);
   const isMobile = useIsMobile();
 
   const toggleMinimized = (disciplinaId: string) => {
@@ -266,6 +273,36 @@ const DisciplinasParciaisList = ({
     }
   };
 
+  // Funções para recuperação
+  const handleAddNotaRecuperacao = (disciplinaId: string) => {
+    const nota = parseFloat(notaRecuperacao);
+    
+    if (isNaN(nota) || nota < 0 || nota > 100) {
+      alert('Por favor, insira uma nota válida entre 0 e 100');
+      return;
+    }
+
+    onAdicionarNotaRecuperacao(disciplinaId, nota);
+    setNotaRecuperacao('');
+    setEditandoRecuperacao(null);
+  };
+
+  const handleRemoveNotaRecuperacao = (disciplinaId: string) => {
+    if (confirm('Tem certeza que deseja remover a nota de recuperação?')) {
+      onRemoverNotaRecuperacao(disciplinaId);
+    }
+  };
+
+  const iniciarEdicaoRecuperacao = (disciplinaId: string, notaAtual?: number) => {
+    setEditandoRecuperacao(disciplinaId);
+    setNotaRecuperacao(notaAtual?.toString() || '');
+  };
+
+  const cancelarEdicaoRecuperacao = () => {
+    setEditandoRecuperacao(null);
+    setNotaRecuperacao('');
+  };
+
   if (disciplinas.length === 0) {
     return (
       <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
@@ -379,6 +416,147 @@ const DisciplinasParciaisList = ({
                     )}
                   </div>
                 </div>
+                
+                {/* Status da Disciplina e Sistema de Recuperação */}
+                {(() => {
+                  const faltasAtuais = disciplina.faltas || 0;
+                  const notaPeriodo = disciplina.notaParcial || 0;
+                  const status = determinarStatusDisciplina(notaPeriodo, disciplina.creditos, faltasAtuais);
+                  const estaCompleta = disciplinaEstaCompleta(disciplina);
+                  
+                  // Calcular pontos restantes para sistema de pontos
+                  const pontosDistribuidos = disciplina.modalidade === 'pontos' 
+                    ? (disciplina.atividades || []).reduce((total, atividade) => total + atividade.notaTotal, 0)
+                    : 0;
+                  const pontosRestantes = disciplina.modalidade === 'pontos' ? 100 - pontosDistribuidos : 0;
+                  
+                  // Debug logs (pode ser removido em produção)
+                  console.log(`� ${disciplina.nome}:`, {
+                    nota: notaPeriodo,
+                    status,
+                    recuperacao: disciplina.recuperacao
+                  });
+                  
+                  // Mostrar status apenas se há alguma nota
+                  if (notaPeriodo === 0) return null;
+                  
+                  return (
+                    <div className="mt-2 p-2 rounded-lg border-l-4 bg-gray-50 text-xs">
+                      {(estaCompleta || disciplina.modalidade === 'medias') && status === 'aprovado' && (
+                        <div className="border-l-green-500">
+                          <span className="text-green-700 font-medium text-sm">✅ APROVADO</span>
+                          <p className="text-green-600 mt-1">Parabéns! Você foi aprovado na disciplina.</p>
+                        </div>
+                      )}
+                      
+                      {(estaCompleta || disciplina.modalidade === 'medias') && status === 'reprovado_nota' && (
+                        <div className="border-l-red-500">
+                          <span className="text-red-700 font-medium text-sm">❌ REPROVADO POR NOTA</span>
+                          <p className="text-red-600 mt-1">Nota insuficiente (mínimo: 40 pontos).</p>
+                        </div>
+                      )}
+                      
+                      {status === 'reprovado_faltas' && (
+                        <div className="border-l-red-500">
+                          <span className="text-red-700 font-medium text-sm">❌ REPROVADO POR FALTAS</span>
+                          <p className="text-red-600 mt-1">Excesso de faltas.</p>
+                        </div>
+                      )}
+                      
+                      {(estaCompleta || disciplina.modalidade === 'medias') && status === 'final' && (
+                        <div className="border-l-yellow-500">
+                          <span className="text-yellow-700 font-medium text-sm">⚠️ RECUPERAÇÃO (FINAL)</span>
+                          <p className="text-yellow-600 mt-1">
+                            Você ficou de final! Nota mínima na recuperação: 
+                            <strong className="ml-1">
+                              {disciplina.recuperacao?.notaMinima?.toFixed(1) || 'Calculando...'}
+                            </strong>
+                          </p>
+                          
+                          {disciplina.recuperacao?.notaRecuperacao ? (
+                            <div className="mt-2 p-2 bg-white rounded border">
+                              <p className="text-sm">
+                                <strong>Nota da Recuperação:</strong> {disciplina.recuperacao.notaRecuperacao.toFixed(1)}
+                                <Button
+                                  onClick={() => iniciarEdicaoRecuperacao(disciplina.id, disciplina.recuperacao?.notaRecuperacao)}
+                                  variant="ghost"
+                                  size="sm"
+                                  className="ml-2 text-xs px-2 py-1 h-auto"
+                                >
+                                  <Edit className="w-3 h-3" />
+                                </Button>
+                                <Button
+                                  onClick={() => handleRemoveNotaRecuperacao(disciplina.id)}
+                                  variant="ghost"
+                                  size="sm"
+                                  className="ml-1 text-xs px-2 py-1 h-auto text-red-600 hover:text-red-700"
+                                >
+                                  <X className="w-3 h-3" />
+                                </Button>
+                              </p>
+                              <p className="text-sm">
+                                <strong>Nota Final:</strong> 
+                                <span className={`ml-1 font-bold ${
+                                  (disciplina.recuperacao.notaFinalComRecuperacao || 0) >= 60 
+                                    ? 'text-green-600' 
+                                    : 'text-red-600'
+                                }`}>
+                                  {disciplina.recuperacao.notaFinalComRecuperacao?.toFixed(1)}
+                                  {(disciplina.recuperacao.notaFinalComRecuperacao || 0) >= 60 
+                                    ? ' ✅ APROVADO' 
+                                    : ' ❌ REPROVADO'
+                                  }
+                                </span>
+                              </p>
+                            </div>
+                          ) : (
+                            <div className="mt-2">
+                              {editandoRecuperacao === disciplina.id ? (
+                                <div className="flex gap-2 items-center">
+                                  <Input
+                                    type="number"
+                                    placeholder="Nota da recuperação (0-100)"
+                                    value={notaRecuperacao}
+                                    onChange={(e) => setNotaRecuperacao(e.target.value)}
+                                    className="text-sm h-8"
+                                    min="0"
+                                    max="100"
+                                    step="0.1"
+                                  />
+                                  <Button
+                                    onClick={() => handleAddNotaRecuperacao(disciplina.id)}
+                                    size="sm"
+                                    className="h-8 px-3"
+                                  >
+                                    <Check className="w-3 h-3" />
+                                  </Button>
+                                  <Button
+                                    onClick={cancelarEdicaoRecuperacao}
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 px-3"
+                                  >
+                                    <X className="w-3 h-3" />
+                                  </Button>
+                                </div>
+                              ) : (
+                                <Button
+                                  onClick={() => iniciarEdicaoRecuperacao(disciplina.id)}
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-xs h-8 px-3 text-yellow-700 border-yellow-300 hover:bg-yellow-50"
+                                >
+                                  <Plus className="w-3 h-3 mr-1" />
+                                  Inserir Nota da Recuperação
+                                </Button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
               
               <Button

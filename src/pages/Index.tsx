@@ -46,7 +46,9 @@ const Index = () => {
     adicionarFalta,
     adicionarAulaDupla,
     removerFalta,
-    definirFaltas
+    definirFaltas,
+    adicionarNotaRecuperacao,
+    removerNotaRecuperacao
   } = useCalculadora();
 
   return (
@@ -78,6 +80,8 @@ const Index = () => {
                 onAdicionarAulaDupla={adicionarAulaDupla}
                 onRemoverFalta={removerFalta}
                 onDefinirFaltas={definirFaltas}
+                onAdicionarNotaRecuperacao={adicionarNotaRecuperacao}
+                onRemoverNotaRecuperacao={removerNotaRecuperacao}
               />
             )}
             
