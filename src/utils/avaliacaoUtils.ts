@@ -1,8 +1,27 @@
 import { DisciplinaParcial, Prova, ModalidadeAvaliacao } from '@/types';
 
 /**
+ * Arredonda nota seguindo o padrão acadêmico brasileiro:
+ * 
+ * Exemplos:
+ * - 86.5 → 87 (arredonda para cima)
+ * - 86.4 → 86 (arredonda para baixo) 
+ * - 86.7 → 87 (arredonda para cima)
+ * - 86.0 → 86 (mantém inteiro)
+ * 
+ * Utiliza Math.round() que implementa o arredondamento
+ * "half-up" (meio para cima), padrão na maioria das instituições.
+ */
+export const arredondarNotaAcademica = (nota: number): number => {
+  return Math.round(nota);
+};
+
+/**
  * Migra uma disciplina parcial existente para o novo formato com modalidade
  * Todas as disciplinas existentes são convertidas para 'pontos'
+ */
+/**
+ * Migração de dados antigos para o novo formato com modalidades
  */
 export const migrarDisciplinaParaNovoFormato = (disciplina: any): DisciplinaParcial => {
   return {
@@ -15,13 +34,19 @@ export const migrarDisciplinaParaNovoFormato = (disciplina: any): DisciplinaParc
 
 /**
  * Calcula a nota final de uma disciplina baseada na sua modalidade
+ * APLICA ARREDONDAMENTO ACADÊMICO na nota final
  */
 export const calcularNotaFinalDisciplina = (disciplina: DisciplinaParcial): number => {
+  let notaFinal: number;
+  
   if (disciplina.modalidade === 'medias') {
-    return calcularNotaPorMedias(disciplina);
+    notaFinal = calcularNotaPorMedias(disciplina);
   } else {
-    return calcularNotaPorPontos(disciplina);
+    notaFinal = calcularNotaPorPontos(disciplina);
   }
+  
+  // Aplica arredondamento acadêmico apenas se a nota for > 0
+  return notaFinal > 0 ? arredondarNotaAcademica(notaFinal) : 0;
 };
 
 /**

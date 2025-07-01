@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import ControleFaltas from './ControleFaltas';
 import { estaReprovadoPorFaltas } from '@/utils/faltasUtils';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { calcularNotaPorMedias, calcularProgressoDisciplina, podeAdicionarProva } from '@/utils/avaliacaoUtils';
+import { calcularNotaFinalDisciplina, calcularProgressoDisciplina, podeAdicionarProva } from '@/utils/avaliacaoUtils';
 
 interface DisciplinasMediasListProps {
   disciplinas: DisciplinaParcial[];
@@ -212,7 +212,7 @@ const DisciplinasMediasList = ({
       
       <div className="space-y-4">
         {disciplinasMedias.map((disciplina) => {
-          const notaAtual = calcularNotaPorMedias(disciplina);
+          const notaAtual = calcularNotaFinalDisciplina(disciplina);
           const progresso = calcularProgressoDisciplina(disciplina);
           const podeAdicionar = podeAdicionarProva(disciplina);
           
