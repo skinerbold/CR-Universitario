@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import ControleFaltas from './ControleFaltas';
-import { estaReprovadoPorFaltas } from '@/utils/faltasUtils';
+import { estaReprovadoPorFaltas, estaReprovadoPorFaltasCompleta } from '@/utils/faltasUtils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { calcularNotaFinalDisciplina, calcularProgressoDisciplina, podeAdicionarProva, determinarStatusDisciplina, disciplinaEstaCompleta } from '@/utils/avaliacaoUtils';
 
@@ -332,8 +332,64 @@ const DisciplinasParciaisList = ({
           >            <div className="flex items-center justify-between mb-3">
               <div className="flex-1 flex items-center gap-3">
                 <div className="flex-1">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="font-medium text-gray-800">{disciplina.nome}</h3>
+                    
+                    {/* Status compacto da disciplina */}
+                    {(() => {
+                      const faltasAtuais = disciplina.faltas || 0;
+                      const notaPeriodo = disciplina.notaParcial || 0;
+                      const status = determinarStatusDisciplina(notaPeriodo, disciplina.creditos, faltasAtuais);
+                      const estaCompleta = disciplinaEstaCompleta(disciplina);
+                      
+                      if (notaPeriodo === 0 || !estaCompleta) return null;
+                      
+                      if (estaReprovadoPorFaltasCompleta(disciplina)) {
+                        return (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                            ❌ Rep. Faltas
+                          </span>
+                        );
+                      }
+                      
+                      if (status === 'aprovado') {
+                        return (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                            ✅ Aprovado
+                          </span>
+                        );
+                      }
+                      
+                      if (status === 'reprovado_nota') {
+                        return (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                            ❌ Rep. Nota
+                          </span>
+                        );
+                      }
+                      
+                      if (status === 'final') {
+                        return (
+                          <div className="flex items-center gap-1">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
+                              ⚠️ Final
+                            </span>
+                            {disciplina.recuperacao?.notaRecuperacao && (
+                              <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${
+                                (disciplina.recuperacao.notaFinalComRecuperacao || 0) >= 60 
+                                  ? 'bg-green-100 text-green-800' 
+                                  : 'bg-red-100 text-red-800'
+                              }`}>
+                                {(disciplina.recuperacao.notaFinalComRecuperacao || 0) >= 60 ? '✅' : '❌'}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      }
+                      
+                      return null;
+                    })()}
+                    
                     {disciplina.creditos === 0 && (
                       <span className="text-xs bg-orange-200 text-orange-800 px-2 py-1 rounded">
                         Sem crédito
@@ -437,118 +493,86 @@ const DisciplinasParciaisList = ({
                     recuperacao: disciplina.recuperacao
                   });
                   
-                  // Mostrar status apenas se há alguma nota
-                  if (notaPeriodo === 0) return null;
+                  // Mostrar status apenas se há alguma nota e disciplina está completa
+                  if (notaPeriodo === 0 || !estaCompleta) return null;
                   
                   return (
-                    <div className="mt-2 p-2 rounded-lg border-l-4 bg-gray-50 text-xs">
-                      {(estaCompleta || disciplina.modalidade === 'medias') && status === 'aprovado' && (
-                        <div className="border-l-green-500">
-                          <span className="text-green-700 font-medium text-sm">✅ APROVADO</span>
-                          <p className="text-green-600 mt-1">Parabéns! Você foi aprovado na disciplina.</p>
-                        </div>
-                      )}
-                      
-                      {(estaCompleta || disciplina.modalidade === 'medias') && status === 'reprovado_nota' && (
-                        <div className="border-l-red-500">
-                          <span className="text-red-700 font-medium text-sm">❌ REPROVADO POR NOTA</span>
-                          <p className="text-red-600 mt-1">Nota insuficiente (mínimo: 40 pontos).</p>
-                        </div>
-                      )}
-                      
-                      {status === 'reprovado_faltas' && (
-                        <div className="border-l-red-500">
-                          <span className="text-red-700 font-medium text-sm">❌ REPROVADO POR FALTAS</span>
-                          <p className="text-red-600 mt-1">Excesso de faltas.</p>
-                        </div>
-                      )}
-                      
-                      {(estaCompleta || disciplina.modalidade === 'medias') && status === 'final' && (
-                        <div className="border-l-yellow-500">
-                          <span className="text-yellow-700 font-medium text-sm">⚠️ RECUPERAÇÃO (FINAL)</span>
-                          <p className="text-yellow-600 mt-1">
-                            Você ficou de final! Nota mínima na recuperação: 
-                            <strong className="ml-1">
-                              {disciplina.recuperacao?.notaMinima?.toFixed(1) || 'Calculando...'}
-                            </strong>
-                          </p>
+                    <div className="mt-2">
+                      {status === 'final' && (
+                        <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-yellow-700 text-xs">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="font-medium">Recuperação necessária</span>
+                            <span>
+                              Min: <strong>{disciplina.recuperacao?.notaMinima?.toFixed(1) || '--'}</strong>
+                            </span>
+                          </div>
                           
                           {disciplina.recuperacao?.notaRecuperacao ? (
-                            <div className="mt-2 p-2 bg-white rounded border">
-                              <p className="text-sm">
-                                <strong>Nota da Recuperação:</strong> {disciplina.recuperacao.notaRecuperacao.toFixed(1)}
-                                <Button
-                                  onClick={() => iniciarEdicaoRecuperacao(disciplina.id, disciplina.recuperacao?.notaRecuperacao)}
-                                  variant="ghost"
-                                  size="sm"
-                                  className="ml-2 text-xs px-2 py-1 h-auto"
-                                >
-                                  <Edit className="w-3 h-3" />
-                                </Button>
-                                <Button
-                                  onClick={() => handleRemoveNotaRecuperacao(disciplina.id)}
-                                  variant="ghost"
-                                  size="sm"
-                                  className="ml-1 text-xs px-2 py-1 h-auto text-red-600 hover:text-red-700"
-                                >
-                                  <X className="w-3 h-3" />
-                                </Button>
-                              </p>
-                              <p className="text-sm">
-                                <strong>Nota Final:</strong> 
-                                <span className={`ml-1 font-bold ${
+                            <div className="space-y-1">
+                              <div className="flex justify-between items-center">
+                                <span>Nota: <strong>{disciplina.recuperacao.notaRecuperacao.toFixed(1)}</strong></span>
+                                <div className="flex gap-1">
+                                  <button
+                                    onClick={() => iniciarEdicaoRecuperacao(disciplina.id, disciplina.recuperacao?.notaRecuperacao)}
+                                    className="p-1 text-gray-500 hover:text-gray-700"
+                                  >
+                                    <Edit className="w-3 h-3" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleRemoveNotaRecuperacao(disciplina.id)}
+                                    className="p-1 text-red-500 hover:text-red-700"
+                                  >
+                                    <X className="w-3 h-3" />
+                                  </button>
+                                </div>
+                              </div>
+                              <div className="font-medium">
+                                Resultado: <span className={`${
                                   (disciplina.recuperacao.notaFinalComRecuperacao || 0) >= 60 
                                     ? 'text-green-600' 
                                     : 'text-red-600'
                                 }`}>
                                   {disciplina.recuperacao.notaFinalComRecuperacao?.toFixed(1)}
-                                  {(disciplina.recuperacao.notaFinalComRecuperacao || 0) >= 60 
-                                    ? ' ✅ APROVADO' 
-                                    : ' ❌ REPROVADO'
-                                  }
+                                  {(disciplina.recuperacao.notaFinalComRecuperacao || 0) >= 60 ? ' ✅' : ' ❌'}
                                 </span>
-                              </p>
+                              </div>
                             </div>
                           ) : (
-                            <div className="mt-2">
+                            <div>
                               {editandoRecuperacao === disciplina.id ? (
-                                <div className="flex gap-2 items-center">
+                                <div className="space-y-1">
                                   <Input
                                     type="number"
-                                    placeholder="Nota da recuperação (0-100)"
+                                    placeholder="0-100"
                                     value={notaRecuperacao}
                                     onChange={(e) => setNotaRecuperacao(e.target.value)}
-                                    className="text-sm h-8"
+                                    className="h-6 text-xs"
                                     min="0"
                                     max="100"
                                     step="0.1"
                                   />
-                                  <Button
-                                    onClick={() => handleAddNotaRecuperacao(disciplina.id)}
-                                    size="sm"
-                                    className="h-8 px-3"
-                                  >
-                                    <Check className="w-3 h-3" />
-                                  </Button>
-                                  <Button
-                                    onClick={cancelarEdicaoRecuperacao}
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-8 px-3"
-                                  >
-                                    <X className="w-3 h-3" />
-                                  </Button>
+                                  <div className="flex gap-1">
+                                    <button
+                                      onClick={() => handleAddNotaRecuperacao(disciplina.id)}
+                                      className="px-2 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600"
+                                    >
+                                      ✓
+                                    </button>
+                                    <button
+                                      onClick={cancelarEdicaoRecuperacao}
+                                      className="px-2 py-1 bg-gray-400 text-white text-xs rounded hover:bg-gray-500"
+                                    >
+                                      ✕
+                                    </button>
+                                  </div>
                                 </div>
                               ) : (
-                                <Button
+                                <button
                                   onClick={() => iniciarEdicaoRecuperacao(disciplina.id)}
-                                  variant="outline"
-                                  size="sm"
-                                  className="text-xs h-8 px-3 text-yellow-700 border-yellow-300 hover:bg-yellow-50"
+                                  className="w-full px-2 py-1 text-xs bg-yellow-100 border border-yellow-300 rounded hover:bg-yellow-200 text-yellow-700"
                                 >
-                                  <Plus className="w-3 h-3 mr-1" />
-                                  Inserir Nota da Recuperação
-                                </Button>
+                                  + Nota da Recuperação
+                                </button>
                               )}
                             </div>
                           )}

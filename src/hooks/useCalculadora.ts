@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Disciplina, CalculoResultado, TipoCalculo, DisciplinaParcial, Atividade, Periodo, Prova, ModalidadeAvaliacao } from '@/types';
 import { usePersistentState, useCalculadoraPersistence } from './usePersistentState';
-import { estaReprovadoPorFaltas } from '@/utils/faltasUtils';
+import { estaReprovadoPorFaltas, estaReprovadoPorFaltasCompleta } from '@/utils/faltasUtils';
 import { 
   migrarDisciplinaParaNovoFormato, 
   calcularNotaFinalDisciplina,
@@ -221,9 +221,10 @@ export const useCalculadora = () => {
         ? calcularPontosConsumidos(disciplinaSegura.atividades)
         : 0; // No sistema de médias, não há "pontos consumidos"
       
-      // Se reprovado por faltas, nota final é 0
+      // Se reprovado por faltas (considerando disciplina completa), nota final é 0
       const faltasAtuais = disciplinaSegura.faltas || 0;
-      const notaFinal = estaReprovadoPorFaltas(disciplinaSegura.creditos, faltasAtuais) ? 0 : notaParcial;
+      const reprovadoPorFaltas = estaReprovadoPorFaltasCompleta(disciplinaSegura);
+      const notaFinal = reprovadoPorFaltas ? 0 : notaParcial;
       
       // Determina status da disciplina e calcula recuperação se necessário
       const status = determinarStatusDisciplina(notaFinal, disciplinaSegura.creditos, faltasAtuais);

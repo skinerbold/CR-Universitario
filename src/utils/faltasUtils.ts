@@ -58,6 +58,37 @@ export const estaReprovadoPorFaltas = (creditos: number, faltasAtuais: number): 
 };
 
 /**
+ * Verifica se o aluno está reprovado por faltas considerando se a disciplina está completa
+ * Só determina reprovação se a disciplina estiver finalizada (todas as avaliações aplicadas)
+ */
+export const estaReprovadoPorFaltasCompleta = (disciplina: any): boolean => {
+  if (!disciplina) return false;
+  
+  const maxFaltas = calcularMaximoFaltas(disciplina.creditos);
+  const faltasAtuais = disciplina.faltas || 0;
+  
+  // Se não excedeu o limite, não está reprovado
+  if (faltasAtuais <= maxFaltas) {
+    return false;
+  }
+  
+  // Se excedeu o limite, verifica se a disciplina está completa
+  if (disciplina.modalidade === 'medias') {
+    const provas = disciplina.provas || [];
+    const totalAvaliacoes = disciplina.totalAvaliacoes || 4;
+    // Só considera reprovado se todas as avaliações foram aplicadas
+    return provas.length >= totalAvaliacoes;
+  } else {
+    // Sistema de pontos: só considera reprovado se todos os pontos foram distribuídos
+    const atividades = disciplina.atividades || [];
+    if (atividades.length === 0) return false;
+    
+    const pontosDistribuidos = atividades.reduce((total: number, atividade: any) => total + atividade.notaTotal, 0);
+    return pontosDistribuidos >= 100;
+  }
+};
+
+/**
  * Retorna configurações visuais baseadas no status de faltas
  */
 export const getStatusFaltasConfig = (status: 'seguro' | 'atencao' | 'critico' | 'reprovado') => {
