@@ -43,7 +43,9 @@ const DisciplinasParciaisList = ({
   onRemoverNotaRecuperacao
 }: DisciplinasParciaisListProps) => {
   const [expandedDisciplina, setExpandedDisciplina] = useState<string | null>(null);
-  const [minimizedDisciplinas, setMinimizedDisciplinas] = useState<Set<string>>(new Set());
+  const [minimizedDisciplinas, setMinimizedDisciplinas] = useState<Set<string>>(
+    new Set(disciplinas.map(d => d.id))
+  );
   const [nomeAtividade, setNomeAtividade] = useState('');
   const [notaObtida, setNotaObtida] = useState('');
   const [notaTotal, setNotaTotal] = useState('');
