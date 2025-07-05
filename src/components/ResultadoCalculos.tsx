@@ -43,7 +43,7 @@ const ResultadoCalculos = ({ resultado, tipoCalculo, disciplinasParciais = [] }:
         <div className={`p-3 sm:p-4 rounded-lg border-2 ${getMediaBgColor(resultado.mediaGeral)}`}>
           <div className="text-center">
             <div className={`text-2xl sm:text-3xl font-bold ${getMediaColor(resultado.mediaGeral)} mb-1`}>
-              {resultado.mediaGeral.toFixed(2)}
+              {resultado.mediaGeral.toFixed(1)}
             </div>
             <div className="text-xs sm:text-sm text-gray-600 font-medium">
               {tipoCalculo === 'curso' ? 'CRA' : 'Média Ponderada'}

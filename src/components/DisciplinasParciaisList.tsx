@@ -127,9 +127,9 @@ const DisciplinasParciaisList = ({
   };
   const iniciarEdicaoAtividade = (disciplinaId: string, atividadeId: string, atividade: Atividade) => {
     setEditandoAtividade({ disciplinaId, atividadeId });
-    setNomeAtividadeEdicao(atividade.nome || '');
-    setNotaObtidaEdicao(atividade.notaObtida.toString());
-    setNotaTotalEdicao(atividade.notaTotal.toString());
+    setNomeAtividadeEdicao('');
+    setNotaObtidaEdicao('');
+    setNotaTotalEdicao('');
   };
 
   const cancelarEdicao = () => {
@@ -229,9 +229,9 @@ const DisciplinasParciaisList = ({
 
   const iniciarEdicaoProva = (disciplinaId: string, provaId: string, prova: any) => {
     setEditandoProva({ disciplinaId, provaId });
-    setNomeProvaEdicao(prova.nome);
-    setNotaProvaEdicao(prova.nota.toString());
-    setPesoProvaEdicao(prova.peso.toString());
+    setNomeProvaEdicao('');
+    setNotaProvaEdicao('');
+    setPesoProvaEdicao('');
   };
 
   const cancelarEdicaoProva = () => {
@@ -794,7 +794,7 @@ const DisciplinasParciaisList = ({
                                 type="text"
                                 value={nomeAtividadeEdicao}
                                 onChange={(e) => setNomeAtividadeEdicao(e.target.value)}
-                                placeholder="Ex: Prova 1, Trabalho..."
+                                placeholder="Nome da atividade"
                                 className="mt-1 text-sm"
                               />
                             </div>
@@ -806,6 +806,7 @@ const DisciplinasParciaisList = ({
                                 step="0.1"
                                 value={notaObtidaEdicao}
                                 onChange={(e) => setNotaObtidaEdicao(e.target.value)}
+                                placeholder="Pontos obtidos"
                                 className="mt-1 text-sm"
                               />
                             </div>
@@ -817,6 +818,7 @@ const DisciplinasParciaisList = ({
                                 step="0.1"
                                 value={notaTotalEdicao}
                                 onChange={(e) => setNotaTotalEdicao(e.target.value)}
+                                placeholder="Pontos totais"
                                 className="mt-1 text-sm"
                               />
                             </div>
@@ -897,7 +899,7 @@ const DisciplinasParciaisList = ({
                                 type="text"
                                 value={nomeProvaEdicao}
                                 onChange={(e) => setNomeProvaEdicao(e.target.value)}
-                                placeholder="Ex: 1ª Prova, Prova Final..."
+                                placeholder="Nome da prova"
                                 className="mt-1 text-sm"
                               />
                             </div>
@@ -910,6 +912,7 @@ const DisciplinasParciaisList = ({
                                 step="0.1"
                                 value={notaProvaEdicao}
                                 onChange={(e) => setNotaProvaEdicao(e.target.value)}
+                                placeholder="Nota obtida"
                                 className="mt-1 text-sm"
                               />
                             </div>
@@ -921,6 +924,7 @@ const DisciplinasParciaisList = ({
                                 step="0.1"
                                 value={pesoProvaEdicao}
                                 onChange={(e) => setPesoProvaEdicao(e.target.value)}
+                                placeholder="Peso da prova"
                                 className="mt-1 text-sm"
                               />
                             </div>

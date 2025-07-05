@@ -19,11 +19,13 @@ const PeriodosList = ({
   onAdicionarDisciplinaPeriodo, 
   onRemoverDisciplinaPeriodo 
 }: PeriodosListProps) => {
-  const [minimizedPeriodos, setMinimizedPeriodos] = useState<Set<string>>(new Set());
+  const [minimizedPeriodos, setMinimizedPeriodos] = useState<Set<string>>(
+    new Set(periodos.map(p => p.id))
+  );
   const [editingDisciplina, setEditingDisciplina] = useState<string | null>(null);
   const [addingToPeriodo, setAddingToPeriodo] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ nome: '', nota: 0, creditos: 0 });
-  const [newDisciplinaForm, setNewDisciplinaForm] = useState({ nome: '', nota: 0, creditos: 0 });
+  const [editForm, setEditForm] = useState({ nome: '', nota: '', creditos: '' });
+  const [newDisciplinaForm, setNewDisciplinaForm] = useState({ nome: '', nota: '', creditos: '' });
 
   const toggleMinimized = (periodoId: string) => {
     setMinimizedPeriodos(prev => {
@@ -40,40 +42,54 @@ const PeriodosList = ({
   const startEditingDisciplina = (disciplina: Disciplina) => {
     setEditingDisciplina(disciplina.id);
     setEditForm({
-      nome: disciplina.nome,
-      nota: disciplina.nota,
-      creditos: disciplina.creditos
+      nome: '',
+      nota: '',
+      creditos: ''
     });
   };
 
   const cancelEdit = () => {
     setEditingDisciplina(null);
-    setEditForm({ nome: '', nota: 0, creditos: 0 });
+    setEditForm({ nome: '', nota: '', creditos: '' });
   };
 
   const saveEdit = (periodoId: string, disciplinaId: string) => {
-    if (editForm.nome.trim() && editForm.nota >= 0 && editForm.creditos >= 0) {
-      onEditarDisciplinaPeriodo(periodoId, disciplinaId, editForm);
+    const nota = parseFloat(editForm.nota) || 0;
+    const creditos = parseInt(editForm.creditos) || 0;
+    
+    if (editForm.nome.trim() && nota >= 0 && creditos >= 0) {
+      onEditarDisciplinaPeriodo(periodoId, disciplinaId, {
+        nome: editForm.nome,
+        nota,
+        creditos
+      });
       setEditingDisciplina(null);
-      setEditForm({ nome: '', nota: 0, creditos: 0 });
+      setEditForm({ nome: '', nota: '', creditos: '' });
     }
   };
 
   const startAddingDisciplina = (periodoId: string) => {
     setAddingToPeriodo(periodoId);
-    setNewDisciplinaForm({ nome: '', nota: 0, creditos: 0 });
+    setNewDisciplinaForm({ nome: '', nota: '', creditos: '' });
   };
 
   const cancelAddDisciplina = () => {
     setAddingToPeriodo(null);
-    setNewDisciplinaForm({ nome: '', nota: 0, creditos: 0 });
+    setNewDisciplinaForm({ nome: '', nota: '', creditos: '' });
   };
 
   const saveNewDisciplina = (periodoId: string) => {
-    if (newDisciplinaForm.nome.trim() && newDisciplinaForm.nota >= 0 && newDisciplinaForm.creditos >= 0) {
-      onAdicionarDisciplinaPeriodo(periodoId, newDisciplinaForm);
+    const nota = parseFloat(newDisciplinaForm.nota) || 0;
+    const creditos = parseInt(newDisciplinaForm.creditos) || 0;
+    
+    if (newDisciplinaForm.nome.trim() && nota >= 0 && creditos >= 0) {
+      onAdicionarDisciplinaPeriodo(periodoId, {
+        nome: newDisciplinaForm.nome,
+        nota,
+        creditos
+      });
       setAddingToPeriodo(null);
-      setNewDisciplinaForm({ nome: '', nota: 0, creditos: 0 });
+      setNewDisciplinaForm({ nome: '', nota: '', creditos: '' });
     }
   };
 
@@ -128,7 +144,7 @@ const PeriodosList = ({
                         mediaPeriodo >= 7 ? 'text-green-600' : 
                         mediaPeriodo >= 6 ? 'text-yellow-600' : 'text-red-600'
                       }`}>
-                        {mediaPeriodo.toFixed(2)}
+                        {mediaPeriodo.toFixed(1)}
                       </strong></span>
                     </div>
                   </div>
@@ -178,19 +194,19 @@ const PeriodosList = ({
                           />
                           <Input
                             type="number"
-                            placeholder="Nota"
+                            placeholder="Nota final"
                             min="0"
                             max="100"
                             step="0.1"
                             value={newDisciplinaForm.nota}
-                            onChange={(e) => setNewDisciplinaForm(prev => ({ ...prev, nota: parseFloat(e.target.value) || 0 }))}
+                            onChange={(e) => setNewDisciplinaForm(prev => ({ ...prev, nota: e.target.value }))}
                           />
                           <Input
                             type="number"
                             placeholder="Créditos"
                             min="0"
                             value={newDisciplinaForm.creditos}
-                            onChange={(e) => setNewDisciplinaForm(prev => ({ ...prev, creditos: parseInt(e.target.value) || 0 }))}
+                            onChange={(e) => setNewDisciplinaForm(prev => ({ ...prev, creditos: e.target.value }))}
                           />
                         </div>
                         <div className="flex gap-2">
@@ -231,8 +247,8 @@ const PeriodosList = ({
                               <Input
                                 type="number"
                                 value={editForm.nota}
-                                onChange={(e) => setEditForm(prev => ({ ...prev, nota: parseFloat(e.target.value) || 0 }))}
-                                placeholder="Nota"
+                                onChange={(e) => setEditForm(prev => ({ ...prev, nota: e.target.value }))}
+                                placeholder="Nota final"
                                 min="0"
                                 max="100"
                                 step="0.1"
@@ -240,7 +256,7 @@ const PeriodosList = ({
                               <Input
                                 type="number"
                                 value={editForm.creditos}
-                                onChange={(e) => setEditForm(prev => ({ ...prev, creditos: parseInt(e.target.value) || 0 }))}
+                                onChange={(e) => setEditForm(prev => ({ ...prev, creditos: e.target.value }))}
                                 placeholder="Créditos"
                                 min="0"
                               />

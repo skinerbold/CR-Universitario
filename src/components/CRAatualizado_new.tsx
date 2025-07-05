@@ -288,7 +288,7 @@ const CRAatualizado = ({ disciplinasParciais, periodos }: CRAatualizadoProps) =>
         <div className={`p-4 rounded-lg border-2 ${getMediaBgColor(craAtualizado.cra)}`}>
           <div className="text-center">
             <div className={`text-3xl font-bold ${getMediaColor(craAtualizado.cra)} mb-1`}>
-              {craAtualizado.cra.toFixed(2)}
+              {craAtualizado.cra.toFixed(1)}
             </div>
             <div className="text-sm text-gray-600 font-medium">
               CRA Atualizado
@@ -332,7 +332,7 @@ const CRAatualizado = ({ disciplinasParciais, periodos }: CRAatualizadoProps) =>
         <div className="space-y-4">
           <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
             <p className="text-sm text-blue-800">
-              <strong>CRA Atual:</strong> {craAtualizado.cra.toFixed(2)}
+              <strong>CRA Atual:</strong> {craAtualizado.cra.toFixed(1)}
             </p>
           </div>
 
@@ -383,8 +383,8 @@ const CRAatualizado = ({ disciplinasParciais, periodos }: CRAatualizadoProps) =>
                     Resultado - Todas as disciplinas já têm nota
                   </h3>
                   <div className="space-y-2 text-sm">
-                    <p><strong>CRA Atual:</strong> {calculos.crAtualCalculado.toFixed(2)}</p>
-                    <p><strong>CRA Desejado:</strong> {calculos.crDesejado.toFixed(2)}</p>
+                    <p><strong>CRA Atual:</strong> {calculos.crAtualCalculado.toFixed(1)}</p>
+                    <p><strong>CRA Desejado:</strong> {calculos.crDesejado.toFixed(1)}</p>
                     {calculos.possivel ? (
                       <p className="text-green-700 font-medium">
                         ✅ Parabéns! Você já atingiu o CRA desejado!
@@ -392,7 +392,7 @@ const CRAatualizado = ({ disciplinasParciais, periodos }: CRAatualizadoProps) =>
                     ) : (
                       <p className="text-red-700 font-medium">
                         ❌ Infelizmente, com as notas atuais não é possível atingir o CRA desejado.
-                        Faltam {Math.abs(calculos.diferenca).toFixed(2)} pontos.
+                        Faltam {Math.abs(calculos.diferenca).toFixed(1)} pontos.
                       </p>
                     )}
                   </div>
@@ -401,15 +401,15 @@ const CRAatualizado = ({ disciplinasParciais, periodos }: CRAatualizadoProps) =>
                 <div>
                   <h3 className="font-semibold text-green-800 mb-3 flex items-center gap-2">
                     <Calculator className="w-5 h-5" />
-                    Análise para atingir CRA {calculos.crDesejado.toFixed(2)}
+                    Análise para atingir CRA {calculos.crDesejado.toFixed(1)}
                   </h3>
                   
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                     <div className="space-y-2 text-sm">
-                      <p><strong>Pontos já obtidos:</strong> {calculos.pontosJaObtidos.toFixed(2)}</p>
-                      <p><strong>Pontos necessários nas atividades restantes:</strong> {calculos.mediaMinimaNecessaria.toFixed(2)} pontos por crédito</p>
+                      <p><strong>Pontos já obtidos:</strong> {calculos.pontosJaObtidos.toFixed(1)}</p>
+                      <p><strong>Pontos necessários nas atividades restantes:</strong> {calculos.mediaMinimaNecessaria.toFixed(1)} pontos por crédito</p>
                       <p className="text-xs text-gray-600">
-                        Para cada crédito de disciplina incompleta, você precisa obter {calculos.mediaMinimaNecessaria.toFixed(2)} pontos
+                        Para cada crédito de disciplina incompleta, você precisa obter {calculos.mediaMinimaNecessaria.toFixed(1)} pontos
                       </p>
                     </div>
                     
@@ -420,7 +420,7 @@ const CRAatualizado = ({ disciplinasParciais, periodos }: CRAatualizadoProps) =>
                             🎯 Meta já atingida!
                           </p>
                           <p className="text-blue-700">
-                            <strong>Parabéns! Você já alcançou o CRA desejado de {calculos.crDesejado.toFixed(2)}.</strong>
+                            <strong>Parabéns! Você já alcançou o CRA desejado de {calculos.crDesejado.toFixed(1)}.</strong>
                             <span> Você pode relaxar nas próximas atividades.</span>
                           </p>
                         </div>
@@ -470,7 +470,7 @@ const CRAatualizado = ({ disciplinasParciais, periodos }: CRAatualizadoProps) =>
                             )}
                             {calculos.possivel && (
                               <div className="text-green-600 text-xs mt-1">
-                                Pontos necessários: {calculos.mediaMinimaNecessaria.toFixed(2)} por crédito
+                                Pontos necessários: {calculos.mediaMinimaNecessaria.toFixed(1)} por crédito
                               </div>
                             )}
                           </div>
@@ -564,8 +564,8 @@ const CRAatualizado = ({ disciplinasParciais, periodos }: CRAatualizadoProps) =>
                                 }`}>
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                                     <div>
-                                      <p><strong>CRA Simulado:</strong> {calcularSimulacao.crSimulado.toFixed(2)}</p>
-                                      <p><strong>CRA Desejado:</strong> {calculos.crDesejado.toFixed(2)}</p>
+                                      <p><strong>CRA Simulado:</strong> {calcularSimulacao.crSimulado.toFixed(1)}</p>
+                                      <p><strong>CRA Desejado:</strong> {calculos.crDesejado.toFixed(1)}</p>
                                     </div>
                                     <div>
                                       {calcularSimulacao.diferenca > 0 ? (
